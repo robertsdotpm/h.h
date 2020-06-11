@@ -1,0 +1,261 @@
+Todo: update this.
+
+------------------------------------------------------------------------
+# Constants
+
+### 123123_uint128_t
+
+uint128 literal
+
+
+### MAX_UINT128
+
+
+### MAX_UINT128_PRECISION
+
+
+### MAX_UINT128_DIGITS
+
+### Logic enums 
+
+    GREATER_THAN = 0,
+    GREATER_EQUALS = 1,
+    LESS_THAN = 2,
+    LESS_EQUALS = 3,
+    BOTH_EQUALS = 4,
+    NOT_EQUALS = 5
+
+
+
+------------------------------------------------------------------------
+# Math
+
+### t_number N(uint128_t value, uint128_t precision=1000)
+
+Simple function to pack a value into a t_number struct.
+
+
+### uint128_t count_digits(uint128_t no)
+
+### struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limit=0)
+
+
+### uint128_t EXP(uint128_t no, uint128_t i)
+
+Exponentiation. E.g. 2, 8 = 256
+
+
+### struct t_number safe_dec(struct t_number no, uint128_t precision)
+
+Return a new t_number with no formatted to a certain precision.
+
+
+### uint128_t highest_precision(struct t_number left, struct t_number right)
+
+Returns the highest precision set between left and right.
+
+
+### bool safe_logic(unsigned int op, struct t_number left, struct t_number right, uint128_t precision=1000)
+
+e.g. safe_logic(BOTH_EQUAL ...)
+
+
+### uint128_t MIN(uint128_t left, uint128_t right)
+
+
+### uint128_t MAX(uint128_t left, uint128_t right)
+
+
+### struct t_number MIN(struct t_number left, struct t_number right)
+
+
+### struct t_number MAX(struct t_number left, struct t_number right)
+
+
+### struct t_number safe_mul(struct t_number left, struct t_number right)
+
+Not used directly. Function pointer passed to safe math.
+
+
+### struct t_number safe_add(struct t_number left, struct t_number right)
+
+Not used directly. Function pointer passed to safe math.
+
+
+### struct t_number safe_sub(struct t_number left, struct t_number right)
+
+Not used directly. Function pointer passed to safe math.
+
+
+### struct t_number safe_div(struct t_number left, struct t_number right)
+
+Not used directly. Function pointer passed to safe math.
+
+### struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t precision=0)
+
+Not currently used or tested.
+
+
+### struct t_number safe_math(
+### struct t_number (*math_op)
+### (struct t_number, struct t_number),
+###     struct t_number left, struct t_number right, uint128_t precision=1000)
+    
+Main function for doing math operations with t_numbers. Takes function
+pointer to the safe_* functions defined earlier.
+
+
+### uint128_t GCD(uint128_t left, uint128_t right)
+
+Greatest common divisor between left and right.
+
+
+### uint128_t uint128_get_whole(struct t_number no)
+
+
+### uint128_t uint128_get_dec(struct t_number no)
+
+
+### struct t_number simplify_insignificant(struct t_number no)
+
+------------------------------------------------------------------------
+# Strings
+
+### static int print_uint128_t(uint128_t u128)
+
+
+### void reverse(char s[])
+
+Reverse C string in place.
+
+
+### void itoa(uint128_t n, char s[])
+
+Convert uint128 no to a c string.
+S char buffer must be able to store a full uint128
+Thus ensure s >= 38 including space for null.
+
+
+### void PN(t_number no)
+
+Print out a t_number structs members. No and precision.
+
+
+### t_number N(const char *s, uint128_t precision=1000)
+
+Takes a string literal and returns a t_number.
+
+
+### 
+
+------------------------------------------------------------------------
+# Cryptography
+
+### sha256(unsigned char out[32], const unsigned char* in, size_t len)
+
+
+
+------------------------------------------------------------------------
+# Utility
+
+### void assert_uint128_t(uint128_t left, uint128_t right)
+
+Throws an assertion equality error if both numbers aren't equal.
+
+
+### void bytes_to_hex(unsigned char *b_str, size_t b_str_len, unsigned char *out, size_t out_len)
+
+
+### bool A(unsigned char *c_str, unsigned int do_throw=0)
+
+Throws a false if the string is not alpha num, space, or standard punct.
+
+
+### define M sizeof
+
+Showhand for sizeof. M = memory size.
+
+
+### void delete_t_number(void *p)
+
+
+
+------------------------------------------------------------------------
+# Hashmaps
+
+### StrMap *map_create(unsigned int capacity)
+
+Allocate a new hash map indexed by string keys.
+
+
+### map_destroy(StrMap *p_map)
+
+Deallocate hashmap.
+
+
+### unsigned int map_put(StrMap *p_map, const unsigned char *p_key, void *p_value)
+
+Store a memory address of an object indexed by a c string key.
+
+
+### void *map_get(StrMap *p_map, const unsigned char *p_key)
+
+Retrieve an object previously at a certain memory location by a c string key.
+
+
+### void *map_get_or_make(
+###    struct StrMap *p_map,
+###    unsigned char *k_key,
+###    void *(*new_func)(),
+###    size_t len=0,
+###    void *(*init_func)(void *)=0,
+###    unsigned int *obj_no=0
+### )
+
+
+### unsigned char * hash_struct(void *s)
+
+Hash a region of memory (a t_offer) in the future will work for all
+structs.
+
+
+
+------------------------------------------------------------------------
+# Linked lists
+
+
+### struct t_linked_item * add_value_to_linked_list(struct t_linked_info *p_info, void *p_value)
+
+
+### void remove_value_from_linked_list(struct t_linked_info *list, void *value
+
+
+### void remove_values_from_linked_list(
+###    struct t_linked_info *hay_list,
+###    struct t_linked_info *needle_list
+### )
+
+
+### struct t_linked_item *TREAD(struct t_linked_info *p_list_info, struct t_linked_item *p_list_item)
+
+
+### void join_linked_lists(
+###    struct t_linked_info *list_a,
+###    struct t_linked_info *list_b
+### )
+
+
+### struct t_linked_item * linked_list_pop(struct t_linked_info *list)
+
+
+### void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_value)(void *)=0)
+
+
+### struct t_linked_info *create_linked_list_info()
+
+
+
+
+
+
+

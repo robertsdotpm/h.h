@@ -1,0 +1,15 @@
+*.out
+*.o
+
+*/Debug
+*/x64/Debug
+*/.vs
+
+*/cmake-build-debug
+
+# WASM
+webasm
+
+xcode
+
+.DS_Store*
