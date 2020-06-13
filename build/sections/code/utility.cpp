@@ -696,15 +696,43 @@ void itoa(uint128_t n, char s[])
     reverse(s);
 }
 
-static int print_uint128_t(uint128_t u128)
+int print_uint128_t(uint128_t u128, uint128_t precision)
 {
-	int rc;
+    size_t prec = (size_t) precision;
 	char buf[30];
 	memset(buf, 0, sizeof(buf));
 	itoa(u128, buf);
-	rc = printf("%s", &buf[0]);
 
-	return rc;
+    if(!precision)
+    {
+	   printf("%s", &buf[0]);
+    }
+    else
+    {
+        if(strlen(buf) >= prec)
+        {
+            // Split string at end of whole portion.
+            size_t dec_offset = strlen(buf) - prec;
+            char tmp = buf[dec_offset];
+            buf[dec_offset] = '\0';
+            char *whole_buf = &buf[0];
+
+            // Create dec buf.
+            char dec_buf[30];
+            memset(dec_buf, 0, sizeof(dec_buf));
+            dec_buf[0] = tmp;
+            memcpy(&dec_buf[1], &buf[dec_offset + 1], strlen((const char *) &buf[dec_offset + 1]));
+
+            // Show result.
+            printf("%s.%s", whole_buf, &dec_buf[0]);
+        }
+        else
+        {
+            printf("%s", &buf[0]);
+        }
+    }
+
+	return 0;
 }
 
 void assert_uint128_t(uint128_t left, uint128_t right)
@@ -729,12 +757,7 @@ unsigned char * Z(unsigned char *c_str, size_t from_size_of)
 
 void PN(t_number no)
 {
-    printf("No.value = ");
-    print_uint128_t(no.value);
-    printf("\r\n");
-    printf("No.precision = ");
-    print_uint128_t(no.precision);
-    printf("\r\n");
+    print_uint128_t(no.value, no.precision);
     printf("\r\n");
 }
 
@@ -1041,5 +1064,54 @@ bool is_hex(char *p_cstr)
         return false;
     }
 
-    return re_match("^[0-9a-f]+$", p_cstr);
+    return re_match("^[0-9a-fA-F]+$", p_cstr);
+}
+
+char *url_get_contents(const char *url)
+{
+    http_t *request = http_get( url, NULL );
+    if(request != NULL)
+    {
+        // Download content to buffer.
+        http_status_t status = HTTP_STATUS_PENDING;
+        int prev_size = -1;
+        while( status == HTTP_STATUS_PENDING )
+        {
+            status = http_process( request );
+            if( prev_size != (int) request->response_size )
+            {
+                //printf( "%d byte(s) received.\n", (int) request->response_size );
+                prev_size = (int) request->response_size;
+            }
+        }
+
+        // Display buffer.
+        if( status == HTTP_STATUS_FAILED )
+        {
+            //printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
+            return NULL;
+        }
+        else
+        {
+            //printf("HTTP got content -- see bellow for how to access it\r\n");
+            //printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
+
+            // Copy req data to new buf
+            // This is done so the http struct can be released and only the data can be returned. 
+            const char *req_data = (const char *) request->response_data;
+            size_t data_size = strlen(req_data);
+            char *buf = (char *) malloc(data_size + 1);
+            memcpy(buf, req_data, data_size);
+            buf[data_size] = '\0';
+
+            // Release HTTP struct and return content.
+            http_release( request );
+            return buf;
+        }
+
+        // Release buffer.
+        http_release( request );
+    }
+
+    return NULL;
 }

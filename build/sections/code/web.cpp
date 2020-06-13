@@ -160,7 +160,13 @@ typedef char wby_sockopt;
 #define WBY_ALIGN(x) __declspec(align(x))
 #endif
 
-#define WBY_INVALID_SOCKET 0
+
+#ifdef __APPLE__
+	#define WBY_INVALID_SOCKET -1
+#else
+	#define WBY_INVALID_SOCKET 0
+#endif
+
 #define snprintf _snprintf
 
 WBY_INTERN int
@@ -193,7 +199,9 @@ wby_socket_set_blocking(wby_socket socket, int blocking)
 WBY_INTERN int
 wby_socket_is_valid(wby_socket socket)
 {
-    return (socket >= 1);
+
+	return (socket >= 1);
+
 }
 
 WBY_INTERN void
@@ -237,7 +245,11 @@ wby_socket_error(void)
 WBY_INTERN int
 wby_socket_is_valid(wby_socket socket)
 {
-    return (socket > 0);
+	#ifdef __APPLE__
+    	return (socket >= 0);
+	#else
+		return (socket >= 1);
+	#endif
 }
 
 WBY_INTERN void
@@ -663,7 +675,11 @@ wby_connection_close(struct wby_connection* connection)
 {
     if (    wby_socket_is_valid( WBY_SOCK(connection->socket) )    ) {
         wby_socket_close(WBY_SOCK(connection->socket));
-        connection->socket = WBY_INVALID_SOCKET;
+		#ifdef __APPLE__
+	    	connection->socket = -1;
+		#else
+			connection->socket = WBY_INVALID_SOCKET;
+		#endif
     }
     connection->flags = 0;
 }
@@ -1135,8 +1151,8 @@ wby_response_end(struct wby_con *conn)
     wby_connection_push(conn_priv, "", 0);
 
     /* Close connection when Content-Length is zero that maybe HTTP/1.0. */
-    if (conn->request.content_length == 0 && !wby_con_is_websocket_request(conn))
-        wby_connection_close(conn_priv);
+    //if (conn->request.content_length == 0 && !wby_con_is_websocket_request(conn))
+    wby_connection_close(conn_priv);
 }
 
 /* ---------------------------------------------------------------
@@ -1662,3 +1678,131 @@ wby_update(struct wby_server *srv)
         } else ++i;
     }
 }
+
+void wby_config(const char *address, unsigned int port, struct server_state* state, struct wby_config* config,
+	int(*dispatch)(struct wby_con* con, void* userdata, void* server))
+{
+	memset(state, 0, sizeof(struct server_state));
+	memset(config, 0, sizeof(struct wby_config));
+	config->userdata = &state;
+	config->address = address;
+	config->port = port;
+	config->connection_max = 4;
+	config->request_buffer_size = WBY_REQ_BUF_SIZE;
+	config->io_buffer_size = 8192;
+	config->log = test_log;
+	config->dispatch = dispatch;
+}
+
+char *get_post_buf(struct wby_con *connection, struct wby_server *svr)
+{
+	struct wby_connection *detailed_con = (struct wby_connection*) connection;
+    int pay_load_len = connection->request.content_length;
+    void *post_content = NULL;
+
+	wby_dbg(svr->config.log, "positive pay load len");
+	if (pay_load_len <= WBY_REQ_BUF_SIZE - 100)
+	{
+		// Allocate mem.
+		wby_dbg(svr->config.log, "Processing POST payload!");
+		post_content = malloc((wby_size) pay_load_len + 1);
+		if (!post_content)
+		{
+			wby_dbg(svr->config.log, "Out of mem for allocation post content.");
+			wby_response_end(connection);
+			return NULL;
+		}
+		memset(post_content, 0, (wby_size) pay_load_len + 1);
+
+		// Read payload.
+		if (wby_read(connection, post_content, (wby_size) pay_load_len) != WBY_OK)
+		{
+			wby_dbg(svr->config.log, "problem reading POST payload");
+			wby_response_end(connection);
+			return NULL;
+		}
+
+		// Didnt fully read payload or invalid payload len set by client.
+		if (detailed_con->body_bytes_read != (wby_size) pay_load_len)
+		{
+			wby_dbg(svr->config.log, "problem fully reading POST payload");
+			wby_response_end(connection);
+			return NULL;
+		}
+
+		// Process JSON.
+		((unsigned char*) post_content)[detailed_con->body_bytes_read] = '\0';
+		return (char *) post_content;
+	}
+
+	return NULL;
+}
+
+StrMap *post_json_eq_to_json(char *post_content)
+{
+	char *json_str = strstr((char* const) post_content, "json=");
+	if (json_str)
+	{
+		json_str = json_str + 5;
+		return json_decode(json_str, strlen(json_str));
+	}
+
+	return NULL;
+}
+
+unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection)
+{
+	size_t url_len = strlen(connection->request.uri);
+	size_t file_path_len = 0;
+	const size_t file_path_size = 512;
+	char file_path[file_path_size] = { 0 };
+
+	// Inputs + format str overflows buf.
+	if ((file_path_len = s_sprintf(file_path, file_path_size, "%s/%s", url_len + strlen(www_root_path), www_root_path, connection->request.uri)) < 1)
+	{
+		wby_response_begin(connection, 500, 3, NULL, 0);
+		wby_write(connection, "500", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+
+	// Validate path before openning it to stop LFI.
+	if (is_lfi(file_path, file_path_size))
+	{
+		wby_response_begin(connection, 500, 3, NULL, 0);
+		wby_write(connection, "500", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+		
+	// Load file if it exists.
+	if (access(file_path, F_OK) != -1)
+	{
+		char* file_content = file_get_contents(&file_path[0]);
+		if (file_content)
+		{
+			size_t file_content_len = strlen(file_content);
+			wby_response_begin(connection, 200, file_content_len, NULL, 0);
+			wby_write(connection, file_content, file_content_len);
+			wby_response_end(connection);
+			free(file_content);
+
+			return 1;
+		}
+	}
+	else
+	{
+		wby_response_begin(connection, 404, 3, NULL, 0);
+		wby_write(connection, "404", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+
+
+	return 0;
+}
+
+

@@ -22,7 +22,7 @@ void reverse(char s[]);
 
 void itoa(uint128_t n, char s[]);
 
-static int print_uint128_t(uint128_t u128);
+int print_uint128_t(uint128_t u128, uint128_t precision=0);
 
 void assert_uint128_t(uint128_t left, uint128_t right);
 
@@ -65,3 +65,5 @@ unsigned int s_gets( char *str, size_t n );
 bool re_match(const char *p_cstr_pattern, char *p_cstr_haystack);
 
 bool is_hex(char *p_cstr);
+
+char *url_get_contents(const char *url);

@@ -587,7 +587,7 @@ struct t_number round(struct t_number no, uint128_t precision)
     //result.precision = surplus.precision;
 
     // Round up.
-    if(surplus.value > ceiling.value)
+    if(surplus.value >= ceiling.value)
     {
         if(result.value == MAX_UINT128)
         {

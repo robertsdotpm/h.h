@@ -44,13 +44,13 @@ void map_destroy(StrMap *p_map);
 
 #define MAX_MEM_ADDRESS_DIGITS 20
 
-size_t map_put(StrMap *p_map, const unsigned char *p_key, void *p_value);
+size_t map_put(StrMap *p_map, const char *p_key, void *p_value);
 
-void *map_get(StrMap *p_map, const unsigned char *p_key);
+void *map_get(StrMap *p_map, const char *p_key);
 
 void *map_get_or_make(
     struct StrMap *p_map,
-    unsigned char *k_key,
+    char *k_key,
     void *(*new_func)(),
     size_t len=0,
     void *(*init_func)(void *)=0,

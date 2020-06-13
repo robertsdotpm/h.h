@@ -60,7 +60,12 @@ HTTP_SOCKET http_internal_connect( char const* address, char const* port )
     // resolve the server address and port
     struct addrinfo* addri = 0;
     int error = getaddrinfo( address, port, &hints, &addri) ;
-    if( error != 0 ) return HTTP_INVALID_SOCKET;
+    if( error != 0 )
+    {
+        //printf("Get addr info error %s %s %d %s\r\n", address, port, error, gai_strerror(error));
+        //errx(1, "%s", gai_strerror(error));
+        return HTTP_INVALID_SOCKET;
+    }
 
     // create the socket
     HTTP_SOCKET sock = socket( addri->ai_family, addri->ai_socktype, addri->ai_protocol );
@@ -156,10 +161,17 @@ http_t* http_get( char const* url, void* memctx )
     char const* resource;
 
     if( http_internal_parse_url( url, address, sizeof( address ), port, sizeof( port ), &resource ) == 0 )
+    {
+        //printf("Url val error\r\n");
         return NULL;
+    }
 
     HTTP_SOCKET socket = http_internal_connect( address, port );
-    if( socket == HTTP_INVALID_SOCKET ) return NULL;
+    if( socket == HTTP_INVALID_SOCKET )
+    {
+        //printf("http invalid socket\r\n");
+        return NULL;
+    }
 
     http_internal_t* internal = http_internal_create( 0, memctx );
     internal->socket = socket;

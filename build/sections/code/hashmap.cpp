@@ -422,21 +422,21 @@ void map_destroy(StrMap *p_map)
     sm_delete(p_map);
 }
 
-size_t map_put(StrMap *p_map, const unsigned char *p_key, void *p_value)
+size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
 {
     uint64_t value_address_no = (uint64_t) p_value;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
     memset(value_address_str, 0, sizeof(value_address_str));
     itoa(value_address_no, value_address_str);
     
-    return sm_put(p_map, (const char *) p_key, (const char *) value_address_str);
+    return sm_put(p_map, p_key, (const char *) value_address_str);
 }
 
-void *map_get(StrMap *p_map, const unsigned char *p_key)
+void *map_get(StrMap *p_map, const char *p_key)
 {
     size_t result = 0;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
-    result = sm_get(p_map, (const char *) p_key, value_address_str, sizeof(value_address_str));
+    result = sm_get(p_map, p_key, value_address_str, sizeof(value_address_str));
     if (result == 0) {
         #if defined(JSON_DEBUG)
             printf("SM get failure? %s\r\n", p_key);
@@ -474,7 +474,7 @@ void *map_get(StrMap *p_map, const unsigned char *p_key)
 
 void *map_get_or_make(
     struct StrMap *p_map,
-    unsigned char *k_key,
+    char *k_key,
     void *(*new_func)(),
     size_t len,
     void *(*init_func)(void *),
@@ -505,7 +505,7 @@ void *map_get_or_make(
         }
 
         // Don't map uninitalised values for saftey reasons.
-        ret = map_put(p_map, (const unsigned char *) k_key, p);
+        ret = map_put(p_map, k_key, p);
 
         // Not every struct has object counters.
         if(obj_no)

@@ -10,12 +10,10 @@ const unsigned int DEBUG_MODE = 1;
 const unsigned int OFFERS_CAPACITY = 100;
 const unsigned int MATCH_CAPACITY = 100;
 
-// Alternatively just set to "."
-const char WWW_ROOT_PATH[] = "";
 
 
 
-#define MAX_WSCONN 8
+#define MAX_WSCONN 0
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WBY_STATIC

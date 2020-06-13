@@ -56,7 +56,7 @@ unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_jso
 
 struct t_json_tokens *new_json_tokens();
 
-StrMap* json_decode(const unsigned char* json_str, size_t json_str_len);
+StrMap* json_decode(const char* json_str, size_t json_str_len);
 
 char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit=0, bool do_throw=false);
 
@@ -67,8 +67,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 struct t_number *jno_schema(
 	StrMap* p_json_map, const char *key,
 	char *p_cstr_exact_list_filter=0,
-	struct t_number gte_filter=N(0),
-	struct t_number lte_filter=N(0),
+	struct t_number gte_filter=N("0"),
+	struct t_number lte_filter=N("0"),
 	unsigned int op=LOGIC_AND,
 	bool do_throw=true
 );

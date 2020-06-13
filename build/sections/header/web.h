@@ -434,3 +434,14 @@ struct wby_connection {
     wby_byte ws_opcode;
     wby_size blocking_count;
 };
+
+
+void wby_config(const char *address, unsigned int port, struct server_state* state, struct wby_config* config,
+	int(*dispatch)(struct wby_con* con, void* userdata, void* server));
+
+char *get_post_buf(struct wby_con *connection, struct wby_server *svr);
+
+StrMap *post_json_eq_to_json(char *post_content);
+
+unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection);
+

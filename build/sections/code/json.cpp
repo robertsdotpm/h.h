@@ -129,7 +129,8 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
         {
 			trim_ws((char*)p_json_tokens->expr.p_no_str);
 			p_json_expr->p_no = new struct t_number;
-			*(p_json_expr->p_no) = N((char*)p_json_tokens->expr.p_no_str);
+			//assert(p_json_tokens->expr.p_no_str);
+			*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
         }
         catch(...)
         {
@@ -152,7 +153,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	}
 
     // Quit if already saved.
-    if(map_get(p_json, p_key) != 0)
+    if(map_get(p_json, (const char *) p_key) != 0)
     {
         goto json_save_cleanup;
     }
@@ -179,7 +180,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	#endif
 
     // Store the key pair in the hash map.
-    if(!map_put(p_json, p_key, p_json_expr))
+    if(!map_put(p_json, (const char *) p_key, p_json_expr))
 	{
 		#ifdef JSON_DEBUG
 			printf("Failed to save key.");
@@ -532,7 +533,7 @@ struct t_json_tokens *new_json_tokens()
 }
 
 // Main function for decoding JSON.
-StrMap* json_decode(const unsigned char* json_str, size_t json_str_len)
+StrMap* json_decode(const char* json_str, size_t json_str_len)
 {
 	// Declare variables.
 	unsigned int json_error = 0;
@@ -703,7 +704,7 @@ StrMap* json_decode(const unsigned char* json_str, size_t json_str_len)
 
 char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
 {
-	void *json_result = map_get(p_json_map, (unsigned char *) key);
+	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
 	{
 		if(do_throw)
@@ -745,7 +746,7 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 
 struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 {
-	void *json_result = map_get(p_json_map, (unsigned char *) key);
+	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
 	{
 		if(do_throw)
@@ -867,6 +868,12 @@ struct t_number *jno_schema(
 					p_cstr_exact_list_filter[i] = '\0';
 				}
 
+				// Quit.
+				if(!p_cstr_exact_filter)
+				{
+					break;
+				}
+
 				// Validate current number against this.
 				if(safe_logic(BOTH_EQUALS, N(p_cstr_exact_filter), *p_no))
 				{
@@ -892,7 +899,7 @@ struct t_number *jno_schema(
 	}
 
 	// Process range filters.
-	if(safe_logic(NOT_EQUALS, gte_filter, N(0)) && safe_logic(NOT_EQUALS, lte_filter, N(0)))
+	if(safe_logic(NOT_EQUALS, gte_filter, N("0")) && safe_logic(NOT_EQUALS, lte_filter, N("0")))
 	{
 		// Do AND compare.
 		if(op == LOGIC_AND)

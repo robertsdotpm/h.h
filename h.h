@@ -182,12 +182,10 @@ const unsigned int DEBUG_MODE = 1;
 const unsigned int OFFERS_CAPACITY = 100;
 const unsigned int MATCH_CAPACITY = 100;
 
-// Alternatively just set to "."
-const char WWW_ROOT_PATH[] = "C:\\Users\\matth\\Desktop\\Projects\\boring_exchange\\tests\\web";
 
 
 
-#define MAX_WSCONN 8
+#define MAX_WSCONN 0
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WBY_STATIC
@@ -1092,7 +1090,7 @@ void reverse(char s[]);
 
 void itoa(uint128_t n, char s[]);
 
-static int print_uint128_t(uint128_t u128);
+int print_uint128_t(uint128_t u128, uint128_t precision=0);
 
 void assert_uint128_t(uint128_t left, uint128_t right);
 
@@ -1135,6 +1133,8 @@ unsigned int s_gets( char *str, size_t n );
 bool re_match(const char *p_cstr_pattern, char *p_cstr_haystack);
 
 bool is_hex(char *p_cstr);
+
+char *url_get_contents(const char *url);
 
 struct t_linked_item {
     void *value;
@@ -1285,13 +1285,13 @@ void map_destroy(StrMap *p_map);
 
 #define MAX_MEM_ADDRESS_DIGITS 20
 
-size_t map_put(StrMap *p_map, const unsigned char *p_key, void *p_value);
+size_t map_put(StrMap *p_map, const char *p_key, void *p_value);
 
-void *map_get(StrMap *p_map, const unsigned char *p_key);
+void *map_get(StrMap *p_map, const char *p_key);
 
 void *map_get_or_make(
     struct StrMap *p_map,
-    unsigned char *k_key,
+    char *k_key,
     void *(*new_func)(),
     size_t len=0,
     void *(*init_func)(void *)=0,
@@ -1497,7 +1497,7 @@ unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_jso
 
 struct t_json_tokens *new_json_tokens();
 
-StrMap* json_decode(const unsigned char* json_str, size_t json_str_len);
+StrMap* json_decode(const char* json_str, size_t json_str_len);
 
 char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit=0, bool do_throw=false);
 
@@ -1508,8 +1508,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 struct t_number *jno_schema(
 	StrMap* p_json_map, const char *key,
 	char *p_cstr_exact_list_filter=0,
-	struct t_number gte_filter=N(0),
-	struct t_number lte_filter=N(0),
+	struct t_number gte_filter=N("0"),
+	struct t_number lte_filter=N("0"),
 	unsigned int op=LOGIC_AND,
 	bool do_throw=true
 );
@@ -4254,6 +4254,17 @@ struct wby_connection {
     wby_size blocking_count;
 };
 
+
+void wby_config(const char *address, unsigned int port, struct server_state* state, struct wby_config* config,
+	int(*dispatch)(struct wby_con* con, void* userdata, void* server));
+
+char *get_post_buf(struct wby_con *connection, struct wby_server *svr);
+
+StrMap *post_json_eq_to_json(char *post_content);
+
+unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection);
+
+
 #ifdef _WIN32
     #define _CRT_NONSTDC_NO_DEPRECATE
     #define _CRT_SECURE_NO_WARNINGS
@@ -6154,15 +6165,43 @@ void itoa(uint128_t n, char s[])
     reverse(s);
 }
 
-static int print_uint128_t(uint128_t u128)
+int print_uint128_t(uint128_t u128, uint128_t precision)
 {
-	int rc;
+    size_t prec = (size_t) precision;
 	char buf[30];
 	memset(buf, 0, sizeof(buf));
 	itoa(u128, buf);
-	rc = printf("%s", &buf[0]);
 
-	return rc;
+    if(!precision)
+    {
+	   printf("%s", &buf[0]);
+    }
+    else
+    {
+        if(strlen(buf) >= prec)
+        {
+            // Split string at end of whole portion.
+            size_t dec_offset = strlen(buf) - prec;
+            char tmp = buf[dec_offset];
+            buf[dec_offset] = '\0';
+            char *whole_buf = &buf[0];
+
+            // Create dec buf.
+            char dec_buf[30];
+            memset(dec_buf, 0, sizeof(dec_buf));
+            dec_buf[0] = tmp;
+            memcpy(&dec_buf[1], &buf[dec_offset + 1], strlen((const char *) &buf[dec_offset + 1]));
+
+            // Show result.
+            printf("%s.%s", whole_buf, &dec_buf[0]);
+        }
+        else
+        {
+            printf("%s", &buf[0]);
+        }
+    }
+
+	return 0;
 }
 
 void assert_uint128_t(uint128_t left, uint128_t right)
@@ -6187,12 +6226,7 @@ unsigned char * Z(unsigned char *c_str, size_t from_size_of)
 
 void PN(t_number no)
 {
-    printf("No.value = ");
-    print_uint128_t(no.value);
-    printf("\r\n");
-    printf("No.precision = ");
-    print_uint128_t(no.precision);
-    printf("\r\n");
+    print_uint128_t(no.value, no.precision);
     printf("\r\n");
 }
 
@@ -6499,7 +6533,56 @@ bool is_hex(char *p_cstr)
         return false;
     }
 
-    return re_match("^[0-9a-f]+$", p_cstr);
+    return re_match("^[0-9a-fA-F]+$", p_cstr);
+}
+
+char *url_get_contents(const char *url)
+{
+    http_t *request = http_get( url, NULL );
+    if(request != NULL)
+    {
+        // Download content to buffer.
+        http_status_t status = HTTP_STATUS_PENDING;
+        int prev_size = -1;
+        while( status == HTTP_STATUS_PENDING )
+        {
+            status = http_process( request );
+            if( prev_size != (int) request->response_size )
+            {
+                //printf( "%d byte(s) received.\n", (int) request->response_size );
+                prev_size = (int) request->response_size;
+            }
+        }
+
+        // Display buffer.
+        if( status == HTTP_STATUS_FAILED )
+        {
+            //printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
+            return NULL;
+        }
+        else
+        {
+            //printf("HTTP got content -- see bellow for how to access it\r\n");
+            //printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
+
+            // Copy req data to new buf
+            // This is done so the http struct can be released and only the data can be returned. 
+            const char *req_data = (const char *) request->response_data;
+            size_t data_size = strlen(req_data);
+            char *buf = (char *) malloc(data_size + 1);
+            memcpy(buf, req_data, data_size);
+            buf[data_size] = '\0';
+
+            // Release HTTP struct and return content.
+            http_release( request );
+            return buf;
+        }
+
+        // Release buffer.
+        http_release( request );
+    }
+
+    return NULL;
 }
 
 
@@ -7327,7 +7410,7 @@ struct t_number round(struct t_number no, uint128_t precision)
     //result.precision = surplus.precision;
 
     // Round up.
-    if(surplus.value > ceiling.value)
+    if(surplus.value >= ceiling.value)
     {
         if(result.value == MAX_UINT128)
         {
@@ -7947,21 +8030,21 @@ void map_destroy(StrMap *p_map)
     sm_delete(p_map);
 }
 
-size_t map_put(StrMap *p_map, const unsigned char *p_key, void *p_value)
+size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
 {
     uint64_t value_address_no = (uint64_t) p_value;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
     memset(value_address_str, 0, sizeof(value_address_str));
     itoa(value_address_no, value_address_str);
     
-    return sm_put(p_map, (const char *) p_key, (const char *) value_address_str);
+    return sm_put(p_map, p_key, (const char *) value_address_str);
 }
 
-void *map_get(StrMap *p_map, const unsigned char *p_key)
+void *map_get(StrMap *p_map, const char *p_key)
 {
     size_t result = 0;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
-    result = sm_get(p_map, (const char *) p_key, value_address_str, sizeof(value_address_str));
+    result = sm_get(p_map, p_key, value_address_str, sizeof(value_address_str));
     if (result == 0) {
         #if defined(JSON_DEBUG)
             printf("SM get failure? %s\r\n", p_key);
@@ -7999,7 +8082,7 @@ void *map_get(StrMap *p_map, const unsigned char *p_key)
 
 void *map_get_or_make(
     struct StrMap *p_map,
-    unsigned char *k_key,
+    char *k_key,
     void *(*new_func)(),
     size_t len,
     void *(*init_func)(void *),
@@ -8030,7 +8113,7 @@ void *map_get_or_make(
         }
 
         // Don't map uninitalised values for saftey reasons.
-        ret = map_put(p_map, (const unsigned char *) k_key, p);
+        ret = map_put(p_map, k_key, p);
 
         // Not every struct has object counters.
         if(obj_no)
@@ -8192,7 +8275,8 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
         {
 			trim_ws((char*)p_json_tokens->expr.p_no_str);
 			p_json_expr->p_no = new struct t_number;
-			*(p_json_expr->p_no) = N((char*)p_json_tokens->expr.p_no_str);
+			//assert(p_json_tokens->expr.p_no_str);
+			*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
         }
         catch(...)
         {
@@ -8215,7 +8299,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	}
 
     // Quit if already saved.
-    if(map_get(p_json, p_key) != 0)
+    if(map_get(p_json, (const char *) p_key) != 0)
     {
         goto json_save_cleanup;
     }
@@ -8242,7 +8326,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	#endif
 
     // Store the key pair in the hash map.
-    if(!map_put(p_json, p_key, p_json_expr))
+    if(!map_put(p_json, (const char *) p_key, p_json_expr))
 	{
 		#ifdef JSON_DEBUG
 			printf("Failed to save key.");
@@ -8595,7 +8679,7 @@ struct t_json_tokens *new_json_tokens()
 }
 
 // Main function for decoding JSON.
-StrMap* json_decode(const unsigned char* json_str, size_t json_str_len)
+StrMap* json_decode(const char* json_str, size_t json_str_len)
 {
 	// Declare variables.
 	unsigned int json_error = 0;
@@ -8766,7 +8850,7 @@ StrMap* json_decode(const unsigned char* json_str, size_t json_str_len)
 
 char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
 {
-	void *json_result = map_get(p_json_map, (unsigned char *) key);
+	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
 	{
 		if(do_throw)
@@ -8808,7 +8892,7 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 
 struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 {
-	void *json_result = map_get(p_json_map, (unsigned char *) key);
+	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
 	{
 		if(do_throw)
@@ -8930,6 +9014,12 @@ struct t_number *jno_schema(
 					p_cstr_exact_list_filter[i] = '\0';
 				}
 
+				// Quit.
+				if(!p_cstr_exact_filter)
+				{
+					break;
+				}
+
 				// Validate current number against this.
 				if(safe_logic(BOTH_EQUALS, N(p_cstr_exact_filter), *p_no))
 				{
@@ -8955,7 +9045,7 @@ struct t_number *jno_schema(
 	}
 
 	// Process range filters.
-	if(safe_logic(NOT_EQUALS, gte_filter, N(0)) && safe_logic(NOT_EQUALS, lte_filter, N(0)))
+	if(safe_logic(NOT_EQUALS, gte_filter, N("0")) && safe_logic(NOT_EQUALS, lte_filter, N("0")))
 	{
 		// Do AND compare.
 		if(op == LOGIC_AND)
@@ -13465,8 +13555,8 @@ bool valid_json_sig(char *json_str, size_t size, StrMap* p_json)
 
     // Pull pub key from json..
     uint8_t pub_key[33 + 1] = {};
-    unsigned char json_key[] = "[auth][pub]";
-    void *json_result = map_get(p_json, &json_key[0]);
+    char json_key[] = "[auth][pub]";
+    void *json_result = map_get(p_json, (const char *) &json_key[0]);
     if(!json_result)
     {
         #if defined(DEBUG_API_VERIFY)
@@ -13622,7 +13712,7 @@ bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf, siz
 
     bool msg_is_valid = false;
     bool valid_user_pub_sig = false;
-    unsigned char *json_str = 0;
+    char *json_str = 0;
     StrMap *p_json_map = 0;
     uint8_t *p_report = 0;
     char *nonce_hex = 0;
@@ -13642,7 +13732,7 @@ bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf, siz
 
     // Allocate clean message buffer for json parser
     // so that json func doesn't touch input str.
-    json_str = (unsigned char *) calloc((msg_len + 1), sizeof(unsigned char));
+    json_str = (char *) calloc((msg_len + 1), sizeof(char));
     if(json_str == NULL)
     {
         goto cleanup_api_verify;
@@ -14265,7 +14355,13 @@ typedef char wby_sockopt;
 #define WBY_ALIGN(x) __declspec(align(x))
 #endif
 
-#define WBY_INVALID_SOCKET 0
+
+#ifdef __APPLE__
+	#define WBY_INVALID_SOCKET -1
+#else
+	#define WBY_INVALID_SOCKET 0
+#endif
+
 #define snprintf _snprintf
 
 WBY_INTERN int
@@ -14298,7 +14394,9 @@ wby_socket_set_blocking(wby_socket socket, int blocking)
 WBY_INTERN int
 wby_socket_is_valid(wby_socket socket)
 {
-    return (socket >= 1);
+
+	return (socket >= 1);
+
 }
 
 WBY_INTERN void
@@ -14342,7 +14440,11 @@ wby_socket_error(void)
 WBY_INTERN int
 wby_socket_is_valid(wby_socket socket)
 {
-    return (socket > 0);
+	#ifdef __APPLE__
+    	return (socket >= 0);
+	#else
+		return (socket >= 1);
+	#endif
 }
 
 WBY_INTERN void
@@ -14768,7 +14870,11 @@ wby_connection_close(struct wby_connection* connection)
 {
     if (    wby_socket_is_valid( WBY_SOCK(connection->socket) )    ) {
         wby_socket_close(WBY_SOCK(connection->socket));
-        connection->socket = WBY_INVALID_SOCKET;
+		#ifdef __APPLE__
+	    	connection->socket = -1;
+		#else
+			connection->socket = WBY_INVALID_SOCKET;
+		#endif
     }
     connection->flags = 0;
 }
@@ -15240,8 +15346,8 @@ wby_response_end(struct wby_con *conn)
     wby_connection_push(conn_priv, "", 0);
 
     /* Close connection when Content-Length is zero that maybe HTTP/1.0. */
-    if (conn->request.content_length == 0 && !wby_con_is_websocket_request(conn))
-        wby_connection_close(conn_priv);
+    //if (conn->request.content_length == 0 && !wby_con_is_websocket_request(conn))
+    wby_connection_close(conn_priv);
 }
 
 /* ---------------------------------------------------------------
@@ -15768,6 +15874,134 @@ wby_update(struct wby_server *srv)
     }
 }
 
+void wby_config(const char *address, unsigned int port, struct server_state* state, struct wby_config* config,
+	int(*dispatch)(struct wby_con* con, void* userdata, void* server))
+{
+	memset(state, 0, sizeof(struct server_state));
+	memset(config, 0, sizeof(struct wby_config));
+	config->userdata = &state;
+	config->address = address;
+	config->port = port;
+	config->connection_max = 4;
+	config->request_buffer_size = WBY_REQ_BUF_SIZE;
+	config->io_buffer_size = 8192;
+	config->log = test_log;
+	config->dispatch = dispatch;
+}
+
+char *get_post_buf(struct wby_con *connection, struct wby_server *svr)
+{
+	struct wby_connection *detailed_con = (struct wby_connection*) connection;
+    int pay_load_len = connection->request.content_length;
+    void *post_content = NULL;
+
+	wby_dbg(svr->config.log, "positive pay load len");
+	if (pay_load_len <= WBY_REQ_BUF_SIZE - 100)
+	{
+		// Allocate mem.
+		wby_dbg(svr->config.log, "Processing POST payload!");
+		post_content = malloc((wby_size) pay_load_len + 1);
+		if (!post_content)
+		{
+			wby_dbg(svr->config.log, "Out of mem for allocation post content.");
+			wby_response_end(connection);
+			return NULL;
+		}
+		memset(post_content, 0, (wby_size) pay_load_len + 1);
+
+		// Read payload.
+		if (wby_read(connection, post_content, (wby_size) pay_load_len) != WBY_OK)
+		{
+			wby_dbg(svr->config.log, "problem reading POST payload");
+			wby_response_end(connection);
+			return NULL;
+		}
+
+		// Didnt fully read payload or invalid payload len set by client.
+		if (detailed_con->body_bytes_read != (wby_size) pay_load_len)
+		{
+			wby_dbg(svr->config.log, "problem fully reading POST payload");
+			wby_response_end(connection);
+			return NULL;
+		}
+
+		// Process JSON.
+		((unsigned char*) post_content)[detailed_con->body_bytes_read] = '\0';
+		return (char *) post_content;
+	}
+
+	return NULL;
+}
+
+StrMap *post_json_eq_to_json(char *post_content)
+{
+	char *json_str = strstr((char* const) post_content, "json=");
+	if (json_str)
+	{
+		json_str = json_str + 5;
+		return json_decode(json_str, strlen(json_str));
+	}
+
+	return NULL;
+}
+
+unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection)
+{
+	size_t url_len = strlen(connection->request.uri);
+	size_t file_path_len = 0;
+	const size_t file_path_size = 512;
+	char file_path[file_path_size] = { 0 };
+
+	// Inputs + format str overflows buf.
+	if ((file_path_len = s_sprintf(file_path, file_path_size, "%s/%s", url_len + strlen(www_root_path), www_root_path, connection->request.uri)) < 1)
+	{
+		wby_response_begin(connection, 500, 3, NULL, 0);
+		wby_write(connection, "500", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+
+	// Validate path before openning it to stop LFI.
+	if (is_lfi(file_path, file_path_size))
+	{
+		wby_response_begin(connection, 500, 3, NULL, 0);
+		wby_write(connection, "500", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+		
+	// Load file if it exists.
+	if (access(file_path, F_OK) != -1)
+	{
+		char* file_content = file_get_contents(&file_path[0]);
+		if (file_content)
+		{
+			size_t file_content_len = strlen(file_content);
+			wby_response_begin(connection, 200, file_content_len, NULL, 0);
+			wby_write(connection, file_content, file_content_len);
+			wby_response_end(connection);
+			free(file_content);
+
+			return 1;
+		}
+	}
+	else
+	{
+		wby_response_begin(connection, 404, 3, NULL, 0);
+		wby_write(connection, "404", 3);
+		wby_response_end(connection);
+
+		return 0;
+	}
+
+
+	return 0;
+}
+
+
+
 static int http_internal_parse_url( char const* url, char* address, size_t address_capacity, char* port,
     size_t port_capacity, char const** resource )
     {
@@ -15830,7 +16064,12 @@ HTTP_SOCKET http_internal_connect( char const* address, char const* port )
     // resolve the server address and port
     struct addrinfo* addri = 0;
     int error = getaddrinfo( address, port, &hints, &addri) ;
-    if( error != 0 ) return HTTP_INVALID_SOCKET;
+    if( error != 0 )
+    {
+        //printf("Get addr info error %s %s %d %s\r\n", address, port, error, gai_strerror(error));
+        //errx(1, "%s", gai_strerror(error));
+        return HTTP_INVALID_SOCKET;
+    }
 
     // create the socket
     HTTP_SOCKET sock = socket( addri->ai_family, addri->ai_socktype, addri->ai_protocol );
@@ -15926,10 +16165,17 @@ http_t* http_get( char const* url, void* memctx )
     char const* resource;
 
     if( http_internal_parse_url( url, address, sizeof( address ), port, sizeof( port ), &resource ) == 0 )
+    {
+        //printf("Url val error\r\n");
         return NULL;
+    }
 
     HTTP_SOCKET socket = http_internal_connect( address, port );
-    if( socket == HTTP_INVALID_SOCKET ) return NULL;
+    if( socket == HTTP_INVALID_SOCKET )
+    {
+        //printf("http invalid socket\r\n");
+        return NULL;
+    }
 
     http_internal_t* internal = http_internal_create( 0, memctx );
     internal->socket = socket;
