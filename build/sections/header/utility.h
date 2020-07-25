@@ -66,4 +66,4 @@ bool re_match(const char *p_cstr_pattern, char *p_cstr_haystack);
 
 bool is_hex(char *p_cstr);
 
-char *url_get_contents(const char *url);
+char *url_get_contents(const char *url, double timeout=4.0);

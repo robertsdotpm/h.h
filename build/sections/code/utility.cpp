@@ -1067,9 +1067,12 @@ bool is_hex(char *p_cstr)
     return re_match("^[0-9a-fA-F]+$", p_cstr);
 }
 
-char *url_get_contents(const char *url)
+char *url_get_contents(const char *url, double timeout)
 {
+    clock_t begin;
+    double time_spent;
     http_t *request = http_get( url, NULL );
+    begin = clock();
     if(request != NULL)
     {
         // Download content to buffer.
@@ -1080,21 +1083,28 @@ char *url_get_contents(const char *url)
             status = http_process( request );
             if( prev_size != (int) request->response_size )
             {
-                //printf( "%d byte(s) received.\n", (int) request->response_size );
+                printf( "%d byte(s) received.\n", (int) request->response_size );
                 prev_size = (int) request->response_size;
+            }
+
+            time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+            if(time_spent >= timeout)
+            {
+                status = HTTP_STATUS_FAILED;
+                break;
             }
         }
 
         // Display buffer.
         if( status == HTTP_STATUS_FAILED )
         {
-            //printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
+            printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
             return NULL;
         }
         else
         {
-            //printf("HTTP got content -- see bellow for how to access it\r\n");
-            //printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
+            printf("HTTP got content -- see bellow for how to access it\r\n");
+            printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
 
             // Copy req data to new buf
             // This is done so the http struct can be released and only the data can be returned. 

@@ -75,11 +75,16 @@ inline int access(const char *pathname, int mode) {
 #include <unistd.h>
 #include <strings.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #endif
 
 
 #ifdef __APPLE__
 #include <unistd.h>
+
+
+#include <machine/endian.h>
+
 #endif
 
 #ifdef _MSC_VER
@@ -130,6 +135,13 @@ static inline int __builtin_clzl(unsigned long long x) {
 }
 #endif
 #endif
+
+
+
+
+
+
+
 
 // M is a short-hand for sizeof.
 #define M sizeof

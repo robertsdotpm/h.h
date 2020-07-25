@@ -13,6 +13,7 @@ sections = [
     ["config", r],
 
     # Datatypes and helper funcs.
+    ["endian", r],
     ["uint128", r],
     ["regex", r],
     ["utility", r],

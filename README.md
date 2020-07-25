@@ -212,7 +212,8 @@ catch(...)
 The URL parsing here isn't great so make sure to specify the port or it won't work.
 
 ``` cpp
-char *url_content = url_get_contents("http://www.example.com:80/index.html");
+// Second param is timeout
+char *url_content = url_get_contents("http://www.google.com:80/index.html", 4.0); 
 free(url_content);
 ```
 

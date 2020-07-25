@@ -215,26 +215,6 @@ int main(int argc, char **argv)
         // Don't care.
         printf("json validation error \r\n");
     }
-
-    // Download a file over HTTP --------------------------------------------
-    // Might make sense to code a wrapper for this boiler plate.
-
-    // Make sure to specify port or it won't work.
-    char *url_content = url_get_contents("http://www.example.com:80/index.html");
-    free(url_content);
-
-    // HTTP POST
-    /*
-        http_t* http_post( char const* url, void const* data, size_t size, void* memctx )
-
-    Initiates a http POST request with the specified url. `url` is a zero terminated string containing the request location,
-    just like you would type it in a browser, for example `http://www.mattiasgustavsson.com:80/http_test.txt`. `data` is a
-    pointer to the data to be sent along as part of the request, and `size` is the number of bytes to send. `memctx` is a 
-    pointer to user defined data which will be passed through to the custom HTTP_MALLOC/HTTP_FREE calls. It can be NULL if 
-    no user defined data is needed. Returns a `http_t` instance, which needs to be passed to `http_process` to process the
-    request. When the request is finished (or have failed), the returned `http_t` instance needs to be released by calling
-    `http_release`. If the request was invalid, `http_post` returns NULL.
-    */
     
     // Match a string --------------------------------------------------------
     char heystack[] = {"DeAdBeEF1122"};
@@ -262,6 +242,27 @@ int main(int argc, char **argv)
         hex_print(pub_key, 33);
         printf("Signature validated with zero errors!\r\n");
     }
+
+    // Download a file over HTTP --------------------------------------------
+    // Might make sense to code a wrapper for this boiler plate.
+
+    // Make sure to specify port or it won't work.
+    char *url_content = url_get_contents("http://www.google.com:80/index.html");
+    free(url_content);
+
+    // HTTP POST
+    /*
+        http_t* http_post( char const* url, void const* data, size_t size, void* memctx )
+
+    Initiates a http POST request with the specified url. `url` is a zero terminated string containing the request location,
+    just like you would type it in a browser, for example `http://www.mattiasgustavsson.com:80/http_test.txt`. `data` is a
+    pointer to the data to be sent along as part of the request, and `size` is the number of bytes to send. `memctx` is a 
+    pointer to user defined data which will be passed through to the custom HTTP_MALLOC/HTTP_FREE calls. It can be NULL if 
+    no user defined data is needed. Returns a `http_t` instance, which needs to be passed to `http_process` to process the
+    request. When the request is finished (or have failed), the returned `http_t` instance needs to be released by calling
+    `http_release`. If the request was invalid, `http_post` returns NULL.
+    */
+
     
 
     // Simple single-threaded, polling web server ----------------------------
