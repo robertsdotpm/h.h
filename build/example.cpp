@@ -1,11 +1,11 @@
-//#define H_H
-//#include "../h.h"
+#define H_H
+#include "../h.h"
 // Copy https://raw.githubusercontent.com/robertsdotpm/h.h/master/h.h and include it
 
     
 
 
-
+/*
 #include "sections/header/includes.h"
 #include "sections/code/includes.cpp"
 
@@ -89,6 +89,7 @@
 #include "sections/header/http.h"
 #include "sections/code/http.cpp"
 
+*/
 
 
 int dispatch(struct wby_con *connection, void *userdata, void *server)

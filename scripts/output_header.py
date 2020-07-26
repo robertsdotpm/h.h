@@ -8,6 +8,9 @@ def r(path):
 
 # Layout of a single file.
 sections = [
+    # Credits file needs to be part of H.H for copyright / license reasons.
+    ["CREDITS", r],
+
     # Includes and setup.
     ["includes", r],
     ["config", r],
