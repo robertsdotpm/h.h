@@ -34,7 +34,9 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 			// Sanity check.
 			if (!p_json_tokens->name)
 			{
-				throw "sub key name not found";
+				fprintf(stderr, "%s", "sub key name not found\r\n");
+				return NULL;
+				// Todo add cleanup.
 			}
 
 			// Copy sub key name.
@@ -50,7 +52,8 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 				// Sanity check.
 				if (!p_json_tokens->name)
 				{
-					throw "sub key name not found";
+					fprintf(stderr, "%s", "sub key name not found\r\n");
+					return NULL;
 				}
 
 				name_len = strnlen_s((char*) p_json_tokens->name, sub_key_size - 1);
@@ -113,7 +116,8 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	// Save any found values to the expr value struct on the heap.
 	// We do this because the expr struct in p_json_expr is reused
 	// for other values and lives on the stack hence gets destroyed.
-    struct t_json_expr *p_json_expr = new struct t_json_expr;
+    struct t_json_expr *p_json_expr = (struct t_json_expr *) malloc(sizeof(struct t_json_expr));
+	memset(p_json_expr, 0, sizeof(struct t_json_expr));
     memcpy(p_json_expr, &p_json_tokens->expr, sizeof(struct t_json_expr));
 
 	// Number values.
@@ -124,18 +128,22 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 			printf("Packing val into t_num '%s'\r\n", (char *) p_json_tokens->expr.p_no_str);
 		#endif
 
-		// N might throw errors if it can't return a big number.
-        try
-        {
-			trim_ws((char*)p_json_tokens->expr.p_no_str);
-			p_json_expr->p_no = new struct t_number;
-			//assert(p_json_tokens->expr.p_no_str);
-			*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
-        }
-        catch(...)
-        {
-            goto json_save_cleanup;
-        }
+		// Avoid number overflows.
+		trim_ws((char*)p_json_tokens->expr.p_no_str);
+		if(strlen((char *) p_json_tokens->expr.p_no_str) > MAX_UINT128_PRECISION)
+		{
+			goto json_save_cleanup;
+		}
+
+		// Check this thing looks like a valid number.
+	    if(!re_match("^[0-9]+([.][0-9]+)?$", (char *) p_json_tokens->expr.p_no_str))
+	    {
+	        goto json_save_cleanup;
+	    }
+
+		p_json_expr->p_no = (struct t_number *) calloc(1, sizeof(struct t_number));
+		//assert(p_json_tokens->expr.p_no_str);
+		*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
 
     }
     else // String literals.
@@ -221,7 +229,8 @@ struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list,
     struct t_json_tokens *p = (struct t_json_tokens *) linked_list->p_list_end->value;
 	if (p == NULL)
 	{
-		throw "memory error";
+		printf("memory error\r\n");
+		exit(1);
 	}
 	else
 	{
@@ -524,8 +533,7 @@ unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_jso
 // Store information on a new sub tree.
 struct t_json_tokens *new_json_tokens()
 {
-    struct t_json_tokens *p_json_tokens = new struct t_json_tokens;
-    memset(p_json_tokens, 0, sizeof(struct t_json_tokens));
+    struct t_json_tokens *p_json_tokens = (struct t_json_tokens *) calloc(1, sizeof(struct t_json_tokens));
     p_json_tokens->expect = JSON_any;
     p_json_tokens->tree_type = JSON_obj;
 
@@ -559,7 +567,8 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 	p_json = map_create(1024);
 	if(!p_json)
 	{
-		throw "Cannot allocate hash map!!";
+		printf("Cannot allocate hash map!!\r\n");
+		exit(1);
 	}
 
 	// Collection of json token counts.
@@ -680,7 +689,9 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 				map_destroy(p_json);
 			}
 
-			throw json_error;
+			
+			fprintf(stderr, "%d", json_error);
+			return NULL;
 		}
 
 	return p_json;
@@ -709,7 +720,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	{
 		if(do_throw)
 		{
-			throw "Key not in json.";
+			printf("Key not in json.\r\n");
+			exit(1);
 		}
 		return 0;
 	}
@@ -720,7 +732,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	    {
 			if(do_throw)
 			{
-				throw "incorrect json value type found";
+				printf("incorrect json value type found\r\n");
+				exit(1);
 			}
 	        return 0;
 	    }
@@ -733,7 +746,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 				{
 					if(do_throw)
 					{
-						throw "Incorrect json value strlen";
+						printf("Incorrect json value strlen\r\n");
+						exit(1);
 					}
 					return 0;
 				}
@@ -751,7 +765,8 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	{
 		if(do_throw)
 		{
-			throw "Key not found in json";
+			printf("Key not found in json\r\n");
+			exit(1);
 		}
 		return 0;
 	}
@@ -762,7 +777,8 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	    {
 			if(do_throw)
 			{
-				throw "Incorrect value type in json";
+				printf("Incorrect value type in json\r\n");
+				exit(1);
 			}
 	        return 0;
 	    }
@@ -785,7 +801,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "Pattern does not match str in json schema.";
+				printf("Pattern does not match str in json schema.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -799,7 +816,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "JSON value is malformed hex.";
+				printf("JSON value is malformed hex.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -816,7 +834,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "cannot alloc new memory for byte str in json schema";
+				printf("cannot alloc new memory for byte str in json schema\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -827,7 +846,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "Unknown error conv hex to bytes in json val schema";
+				printf("Unknown error conv hex to bytes in json val schema\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -891,7 +911,8 @@ struct t_number *jno_schema(
 		{
 			if(do_throw)
 			{
-				throw "Exact match failed for list of nos.";
+				printf("Exact match failed for list of nos.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -909,7 +930,8 @@ struct t_number *jno_schema(
 			{
 				if(do_throw)
 				{
-					throw "AND filters failed for json schema.";
+					printf("AND filters failed for json schema.\r\n");
+					exit(1);
 				}
 
 				return 0;
@@ -924,7 +946,8 @@ struct t_number *jno_schema(
 			{
 				if(do_throw)
 				{
-					throw "OR filters failed for json schema.";
+					printf("OR filters failed for json schema.\r\n");
+					exit(1);
 				}
 
 				return 0;

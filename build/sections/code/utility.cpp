@@ -606,7 +606,8 @@ size_t bytes_to_hex(unsigned char *b_str, size_t b_str_len, unsigned char *out, 
     {
         if(out[0] != '\0')
         {
-            throw "Bytes to hex called TWICE on same buffer";
+            printf("Bytes to hex called TWICE on same buffer");
+            exit(1);
 		}
 	}
 
@@ -654,7 +655,8 @@ bool A(unsigned char *c_str, unsigned int do_throw)
 
     if(do_throw && !is_safe)
     {
-        throw "C string is not safe";
+        printf("C string is not safe");
+        exit(1);
 	}
 
     return is_safe;
@@ -763,8 +765,8 @@ void PN(t_number no)
 
 void delete_t_number(void *p)
 {
-    auto p_no = (struct t_number *) p;
-    delete p_no;
+    struct t_number *p_no = (struct t_number *) p;
+    free(p_no);
 }
 
 void terminate_uid(void *uid, size_t buf_len)
@@ -1067,61 +1069,4 @@ bool is_hex(char *p_cstr)
     return re_match("^[0-9a-fA-F]+$", p_cstr);
 }
 
-char *url_get_contents(const char *url, double timeout)
-{
-    clock_t begin;
-    double time_spent;
-    http_t *request = http_get( url, NULL );
-    begin = clock();
-    if(request != NULL)
-    {
-        // Download content to buffer.
-        http_status_t status = HTTP_STATUS_PENDING;
-        int prev_size = -1;
-        while( status == HTTP_STATUS_PENDING )
-        {
-            status = http_process( request );
-            if( prev_size != (int) request->response_size )
-            {
-                printf( "%d byte(s) received.\n", (int) request->response_size );
-                prev_size = (int) request->response_size;
-            }
 
-            time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-            if(time_spent >= timeout)
-            {
-                status = HTTP_STATUS_FAILED;
-                break;
-            }
-        }
-
-        // Display buffer.
-        if( status == HTTP_STATUS_FAILED )
-        {
-            printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
-            return NULL;
-        }
-        else
-        {
-            printf("HTTP got content -- see bellow for how to access it\r\n");
-            printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
-
-            // Copy req data to new buf
-            // This is done so the http struct can be released and only the data can be returned. 
-            const char *req_data = (const char *) request->response_data;
-            size_t data_size = strlen(req_data);
-            char *buf = (char *) malloc(data_size + 1);
-            memcpy(buf, req_data, data_size);
-            buf[data_size] = '\0';
-
-            // Release HTTP struct and return content.
-            http_release( request );
-            return buf;
-        }
-
-        // Release buffer.
-        http_release( request );
-    }
-
-    return NULL;
-}

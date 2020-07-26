@@ -239,6 +239,37 @@ const unsigned int MATCH_CAPACITY = 100;
 /////// Don't touch bellow this point. ///////
 //////////////////////////////////////////////
 
+/*-
+ * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+ *
+ * Copyright (c) 2002 Thomas Moestl <tmm@FreeBSD.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD$
+ */
+
+
 /* Alignment-agnostic encode/decode bytestream to/from little/big endian. */
 
 static __inline uint16_t
@@ -691,7 +722,6 @@ bool re_match(const char *p_cstr_pattern, char *p_cstr_haystack);
 
 bool is_hex(char *p_cstr);
 
-char *url_get_contents(const char *url, double timeout=4.0);
 
 struct t_linked_item {
     void *value;
@@ -3911,6 +3941,7 @@ typedef struct http_internal_t
     } http_internal_t;
 
 int http_get_response(http_t* request);
+char *url_get_contents(const char *url, double timeout=4.0);
 
 
 #endif
@@ -5617,7 +5648,8 @@ size_t bytes_to_hex(unsigned char *b_str, size_t b_str_len, unsigned char *out, 
     {
         if(out[0] != '\0')
         {
-            throw "Bytes to hex called TWICE on same buffer";
+            printf("Bytes to hex called TWICE on same buffer");
+            exit(1);
 		}
 	}
 
@@ -5665,7 +5697,8 @@ bool A(unsigned char *c_str, unsigned int do_throw)
 
     if(do_throw && !is_safe)
     {
-        throw "C string is not safe";
+        printf("C string is not safe");
+        exit(1);
 	}
 
     return is_safe;
@@ -5774,8 +5807,8 @@ void PN(t_number no)
 
 void delete_t_number(void *p)
 {
-    auto p_no = (struct t_number *) p;
-    delete p_no;
+    struct t_number *p_no = (struct t_number *) p;
+    free(p_no);
 }
 
 void terminate_uid(void *uid, size_t buf_len)
@@ -6078,64 +6111,7 @@ bool is_hex(char *p_cstr)
     return re_match("^[0-9a-fA-F]+$", p_cstr);
 }
 
-char *url_get_contents(const char *url, double timeout)
-{
-    clock_t begin;
-    double time_spent;
-    http_t *request = http_get( url, NULL );
-    begin = clock();
-    if(request != NULL)
-    {
-        // Download content to buffer.
-        http_status_t status = HTTP_STATUS_PENDING;
-        int prev_size = -1;
-        while( status == HTTP_STATUS_PENDING )
-        {
-            status = http_process( request );
-            if( prev_size != (int) request->response_size )
-            {
-                printf( "%d byte(s) received.\n", (int) request->response_size );
-                prev_size = (int) request->response_size;
-            }
 
-            time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-            if(time_spent >= timeout)
-            {
-                status = HTTP_STATUS_FAILED;
-                break;
-            }
-        }
-
-        // Display buffer.
-        if( status == HTTP_STATUS_FAILED )
-        {
-            printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
-            return NULL;
-        }
-        else
-        {
-            printf("HTTP got content -- see bellow for how to access it\r\n");
-            printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
-
-            // Copy req data to new buf
-            // This is done so the http struct can be released and only the data can be returned. 
-            const char *req_data = (const char *) request->response_data;
-            size_t data_size = strlen(req_data);
-            char *buf = (char *) malloc(data_size + 1);
-            memcpy(buf, req_data, data_size);
-            buf[data_size] = '\0';
-
-            // Release HTTP struct and return content.
-            http_release( request );
-            return buf;
-        }
-
-        // Release buffer.
-        http_release( request );
-    }
-
-    return NULL;
-}
 
 
 void delete_list_item(struct t_linked_item *list_item)
@@ -6150,7 +6126,7 @@ void delete_list_item(struct t_linked_item *list_item)
 		}
         */
 
-		delete list_item;
+		free(list_item);
 	}
 }
 
@@ -6158,7 +6134,7 @@ void delete_list_item(struct t_linked_item *list_item)
 struct t_linked_item * add_value_to_linked_list(struct t_linked_info *p_info, void *p_value)
 {
     // Make new list item container.
-    struct t_linked_item *p_item = new struct t_linked_item;
+    struct t_linked_item *p_item = (struct t_linked_item *) malloc(sizeof(struct t_linked_item));
     p_item->p_next = NULL;
     p_item->p_prev = NULL;
 
@@ -6258,10 +6234,11 @@ void remove_value_from_linked_list(
                         }
                         else
                         {
-                                throw "List no underflow";
+                                printf("List no underflow");
+                                exit(1);
                         }
 
-                        delete p_list_item;
+                        free(p_list_item);
                         p_list_item = 0;
                 }
 
@@ -6368,7 +6345,7 @@ void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_
 
 struct t_linked_info *create_linked_list_info()
 {
-    struct t_linked_info *p = new struct t_linked_info;
+    struct t_linked_info *p = (struct t_linked_info *) malloc(sizeof(struct t_linked_info));
     memset(p, 0, sizeof(struct t_linked_info));
     return p;
 }
@@ -6415,7 +6392,8 @@ struct t_number safe_dec(struct t_number no, uint128_t precision)
     // Max possible precision should be:
     if(no.precision > MAX_UINT128_PRECISION || precision > MAX_UINT128_PRECISION)
     {
-        throw "No.prec or prec > max_precision";
+        printf("No.prec or prec > max_precision\r\n");
+        exit(1);
     }
 
     // Calculate digits in number.
@@ -6446,7 +6424,8 @@ struct t_number safe_dec(struct t_number no, uint128_t precision)
         if(precision_difference > remaining_digits)
         {
             //if(no
-            throw "u Whole number can't fit with this precision upgrade.";
+            printf("u Whole number can't fit with this precision upgrade.\r\n");
+            exit(1);
         }
 
         // Exponent ** imp.
@@ -6558,7 +6537,8 @@ bool safe_logic(unsigned int op, struct t_number left, struct t_number right, ui
         return left.value != right.value;
     }
 
-    throw "Unknown logic op.";
+    printf("Unknown logic op.\r\n");
+    exit(1);
 }
 
 uint128_t Min(uint128_t left, uint128_t right)
@@ -6618,7 +6598,8 @@ struct t_number safe_mul(struct t_number left, struct t_number right)
     // Check for overflow before multiplying them.
     if(right.value > 0 && left.value > MAX_UINT128 / right.value)
     {
-        throw "Mul overflow.";
+        printf("Mul overflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -6652,7 +6633,8 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Check for overflow before adding them.
     if(left.value > 0 && right.value > MAX_UINT128 - left.value)
     {
-        throw "Add overflow.";
+        printf("Add overflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -6676,7 +6658,8 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Check for overflow before adding them.
     if(left.value < right.value)
     {
-        throw "Sub underflow.";
+        printf("Sub underflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -6735,7 +6718,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Check for divide by zero.
     if(right.value == 0 || left.value == 0)
     {
-        throw "Div by zero";
+        printf("Div by zero\r\n");
+        exit(1);
     }
 
     // Attempt to simplify left and right to save digit space in uint128.
@@ -6789,7 +6773,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Avoid overflow after padding.
     if(left_digits + padding > MAX_UINT128_DIGITS)
     {
-        throw "Number result too large for this division.";
+        printf("Number result too large for this division.\r\n");
+        exit(1);
     }
 
     // Calculate intermediary padded result.
@@ -6800,7 +6785,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Exclude potential truncation errors from excessively large numbers.
     if(MAX_UINT128_DIGITS - whole_part_len < left.precision)
     {
-        throw "Result too large for decimal component.";
+        printf("Result too large for decimal component.\r\n");
+        exit(1);
     }
 
     // Check for division overflow errors.
@@ -6810,7 +6796,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     );
     if(!safe_logic(BOTH_EQUALS, N(left.value, 0), derive_left, 0))
     {
-        throw "Division overflow error.";
+        printf("Division overflow error.\r\n");
+        exit(1);
     }
 
     // These assert lines bound the result by the inputs e.g.
@@ -6861,7 +6848,8 @@ struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limi
 
     if(limit > len)
     {
-        throw "No by index limit overflow";
+        printf("No by index limit overflow\r\n");
+        exit(1);
     }
 
     if(limit == 0)
@@ -6929,7 +6917,8 @@ struct t_number round(struct t_number no, uint128_t precision)
     uint128_t digits = count_digits(no.value);
     if(digits == 0)
     {
-        result = { 0, precision };
+        result.value = 0;
+        result.precision = precision;
         return result;
     }
 
@@ -6966,7 +6955,8 @@ struct t_number round(struct t_number no, uint128_t precision)
     {
         if(result.value == MAX_UINT128)
         {
-            throw "Can't round up value = overflow";
+            printf("Can't round up value = overflow\r\n");
+            exit(1);
         }
 
         result.value++;
@@ -6987,7 +6977,8 @@ struct t_number safe_math(
     // Precision too high.
     if(precision > MAX_UINT128_PRECISION)
     {
-        throw "Chosen t_number precision is too high.";
+        printf("Chosen t_number precision is too high.\r\n");
+        exit(1);
     }
 
     // Pad inputs.
@@ -7021,7 +7012,7 @@ uint128_t uint128_get_dec(struct t_number no)
     // Pad whole portion.
     uint128_t whole_unpadded = uint128_get_whole(no);
     t_number whole_padded = safe_dec(
-        { whole_unpadded, 0 }, no.precision
+        N(whole_unpadded, 0), no.precision
     );
 
     // Calculate decimal result.
@@ -7047,7 +7038,8 @@ struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t 
     // Check for divide by zero.
     if(right.value == 0)
     {
-        throw "Mod zero error";
+        printf("Mod zero error\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -7130,7 +7122,8 @@ t_number N(const char *s, uint128_t precision)
     // Handle precision underflows.
     if(dec_total && precision < s_precision && precision)
     {
-        throw "Insufficent prescision to handle storing this value";
+        printf("Insufficent prescision to handle storing this value\r\n");
+        exit(1);
     }
 
     // Assume whole number. (dec_total ? 333 : s_len - 1)
@@ -7643,7 +7636,8 @@ void *map_get_or_make(
 {
     if(!len && !init_func)
     {
-        throw "No way to initalise this value.";
+        printf("No way to initalise this value.\r\n");
+        exit(1);
     }
 
     void *p = 0;
@@ -7692,7 +7686,8 @@ void *init_empty(void *p)
 
 void *new_summary()
 {
-    void *p_summary = new struct t_summary;
+    void *p_summary = malloc(sizeof(struct t_summary));
+    memset(p_summary, 0, sizeof(struct t_summary));
     return p_summary;
 }
 
@@ -7732,7 +7727,9 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 			// Sanity check.
 			if (!p_json_tokens->name)
 			{
-				throw "sub key name not found";
+				fprintf(stderr, "%s", "sub key name not found\r\n");
+				return NULL;
+				// Todo add cleanup.
 			}
 
 			// Copy sub key name.
@@ -7748,7 +7745,8 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 				// Sanity check.
 				if (!p_json_tokens->name)
 				{
-					throw "sub key name not found";
+					fprintf(stderr, "%s", "sub key name not found\r\n");
+					return NULL;
 				}
 
 				name_len = strnlen_s((char*) p_json_tokens->name, sub_key_size - 1);
@@ -7811,7 +7809,8 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 	// Save any found values to the expr value struct on the heap.
 	// We do this because the expr struct in p_json_expr is reused
 	// for other values and lives on the stack hence gets destroyed.
-    struct t_json_expr *p_json_expr = new struct t_json_expr;
+    struct t_json_expr *p_json_expr = (struct t_json_expr *) malloc(sizeof(struct t_json_expr));
+	memset(p_json_expr, 0, sizeof(struct t_json_expr));
     memcpy(p_json_expr, &p_json_tokens->expr, sizeof(struct t_json_expr));
 
 	// Number values.
@@ -7822,18 +7821,22 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 			printf("Packing val into t_num '%s'\r\n", (char *) p_json_tokens->expr.p_no_str);
 		#endif
 
-		// N might throw errors if it can't return a big number.
-        try
-        {
-			trim_ws((char*)p_json_tokens->expr.p_no_str);
-			p_json_expr->p_no = new struct t_number;
-			//assert(p_json_tokens->expr.p_no_str);
-			*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
-        }
-        catch(...)
-        {
-            goto json_save_cleanup;
-        }
+		// Avoid number overflows.
+		trim_ws((char*)p_json_tokens->expr.p_no_str);
+		if(strlen((char *) p_json_tokens->expr.p_no_str) > MAX_UINT128_PRECISION)
+		{
+			goto json_save_cleanup;
+		}
+
+		// Check this thing looks like a valid number.
+	    if(!re_match("^[0-9]+([.][0-9]+)?$", (char *) p_json_tokens->expr.p_no_str))
+	    {
+	        goto json_save_cleanup;
+	    }
+
+		p_json_expr->p_no = (struct t_number *) calloc(1, sizeof(struct t_number));
+		//assert(p_json_tokens->expr.p_no_str);
+		*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
 
     }
     else // String literals.
@@ -7919,7 +7922,8 @@ struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list,
     struct t_json_tokens *p = (struct t_json_tokens *) linked_list->p_list_end->value;
 	if (p == NULL)
 	{
-		throw "memory error";
+		printf("memory error\r\n");
+		exit(1);
 	}
 	else
 	{
@@ -8222,8 +8226,7 @@ unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_jso
 // Store information on a new sub tree.
 struct t_json_tokens *new_json_tokens()
 {
-    struct t_json_tokens *p_json_tokens = new struct t_json_tokens;
-    memset(p_json_tokens, 0, sizeof(struct t_json_tokens));
+    struct t_json_tokens *p_json_tokens = (struct t_json_tokens *) calloc(1, sizeof(struct t_json_tokens));
     p_json_tokens->expect = JSON_any;
     p_json_tokens->tree_type = JSON_obj;
 
@@ -8257,7 +8260,8 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 	p_json = map_create(1024);
 	if(!p_json)
 	{
-		throw "Cannot allocate hash map!!";
+		printf("Cannot allocate hash map!!\r\n");
+		exit(1);
 	}
 
 	// Collection of json token counts.
@@ -8378,7 +8382,9 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 				map_destroy(p_json);
 			}
 
-			throw json_error;
+			
+			fprintf(stderr, "%d", json_error);
+			return NULL;
 		}
 
 	return p_json;
@@ -8407,7 +8413,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	{
 		if(do_throw)
 		{
-			throw "Key not in json.";
+			printf("Key not in json.\r\n");
+			exit(1);
 		}
 		return 0;
 	}
@@ -8418,7 +8425,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	    {
 			if(do_throw)
 			{
-				throw "incorrect json value type found";
+				printf("incorrect json value type found\r\n");
+				exit(1);
 			}
 	        return 0;
 	    }
@@ -8431,7 +8439,8 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 				{
 					if(do_throw)
 					{
-						throw "Incorrect json value strlen";
+						printf("Incorrect json value strlen\r\n");
+						exit(1);
 					}
 					return 0;
 				}
@@ -8449,7 +8458,8 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	{
 		if(do_throw)
 		{
-			throw "Key not found in json";
+			printf("Key not found in json\r\n");
+			exit(1);
 		}
 		return 0;
 	}
@@ -8460,7 +8470,8 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	    {
 			if(do_throw)
 			{
-				throw "Incorrect value type in json";
+				printf("Incorrect value type in json\r\n");
+				exit(1);
 			}
 	        return 0;
 	    }
@@ -8483,7 +8494,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "Pattern does not match str in json schema.";
+				printf("Pattern does not match str in json schema.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -8497,7 +8509,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "JSON value is malformed hex.";
+				printf("JSON value is malformed hex.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -8514,7 +8527,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "cannot alloc new memory for byte str in json schema";
+				printf("cannot alloc new memory for byte str in json schema\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -8525,7 +8539,8 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 		{
 			if(do_throw)
 			{
-				throw "Unknown error conv hex to bytes in json val schema";
+				printf("Unknown error conv hex to bytes in json val schema\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -8589,7 +8604,8 @@ struct t_number *jno_schema(
 		{
 			if(do_throw)
 			{
-				throw "Exact match failed for list of nos.";
+				printf("Exact match failed for list of nos.\r\n");
+				exit(1);
 			}
 
 			return 0;
@@ -8607,7 +8623,8 @@ struct t_number *jno_schema(
 			{
 				if(do_throw)
 				{
-					throw "AND filters failed for json schema.";
+					printf("AND filters failed for json schema.\r\n");
+					exit(1);
 				}
 
 				return 0;
@@ -8622,7 +8639,8 @@ struct t_number *jno_schema(
 			{
 				if(do_throw)
 				{
-					throw "OR filters failed for json schema.";
+					printf("OR filters failed for json schema.\r\n");
+					exit(1);
 				}
 
 				return 0;
@@ -8945,7 +8963,8 @@ uint32_t random32(void) {
   unsigned int ret = rand_bytes((unsigned char *) &buf, 4);
   if(ret != 4)
   {
-    throw "Unable to get entropy.";
+    printf("Unable to get entropy.\r\n");
+    exit(1);
   }
 
   return buf;
@@ -12007,7 +12026,7 @@ void point_multiply(const ecdsa_curve *curve, const bignum256 *k,
   uint32_t abits = 0;
   int ashift = 0;
   uint32_t is_even = (k->val[0] & 1) - 1;
-  uint32_t bits = {}, sign = {}, nsign = {};
+  uint32_t bits = {0}, sign = {0}, nsign = {0};
   static CONFIDENTIAL jacobian_curve_point jres;
   curve_point pmult[8] = {};
   const bignum256 *prime = &curve->prime;
@@ -12122,7 +12141,7 @@ void scalar_multiply(const ecdsa_curve *curve, const bignum256 *k,
                      curve_point *res) {
   assert(bn_is_less(k, &curve->order));
 
-  int i = {}, j = {};
+  int i = {0}, j = {0};
   static CONFIDENTIAL bignum256 a;
   uint32_t is_even = (k->val[0] & 1) - 1;
   uint32_t lowbits = 0;
@@ -13559,18 +13578,18 @@ char *api_message(
     size_t api_msg_size = 0;
 
     // Layout of what an API message looks like.
-    const char api_msg_format[] = R"(
-    {
-        "call": "%s",
-        "params": "%s",
-        "reply_mode": "%s",
-        "nonce": "%s",
-        "enclave_report": "%s",
-        "auth": {
-            "pub": "%s",
-            "demo": "%d"
-        }
-    } )";
+    const char api_msg_format[] = 
+    "{"
+    "    \"call\": \"%s\","
+    "    \"params\": \"%s\","
+    "    \"reply_mode\": \"%s\","
+    "    \"nonce\": \"%s\","
+    "    \"enclave_report\": \"%s\","
+    "    \"auth\": {"
+    "        \"pub\": \"%s\","
+    "        \"demo\": \"%d\""
+    "    }"
+    "}";
 
     #if defined(INSIDE_ENCLAVE)
         // Set enclave report type.
@@ -16005,6 +16024,66 @@ int http_get_response(http_t* request)
 
     return HTTP_STATUS_COMPLETED;
 }
+
+char *url_get_contents(const char *url, double timeout)
+{
+    clock_t begin;
+    double time_spent;
+    http_t *request = http_get( url, NULL );
+    begin = clock();
+    if(request != NULL)
+    {
+        // Download content to buffer.
+        http_status_t status = HTTP_STATUS_PENDING;
+        int prev_size = -1;
+        while( status == HTTP_STATUS_PENDING )
+        {
+            status = http_process( request );
+            if( prev_size != (int) request->response_size )
+            {
+                //printf( "%d byte(s) received.\n", (int) request->response_size );
+                prev_size = (int) request->response_size;
+            }
+
+            time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+            if(time_spent >= timeout)
+            {
+                status = HTTP_STATUS_FAILED;
+                break;
+            }
+        }
+
+        // Display buffer.
+        if( status == HTTP_STATUS_FAILED )
+        {
+            //printf( "HTTP request failed (%d): %s.\n", request->status_code, request->reason_phrase );
+            return NULL;
+        }
+        else
+        {
+            //printf("HTTP got content -- see bellow for how to access it\r\n");
+            //printf( "\nContent type: %s\n\n%s\n", request->content_type, (char const*)request->response_data );
+
+            // Copy req data to new buf
+            // This is done so the http struct can be released and only the data can be returned. 
+            const char *req_data = (const char *) request->response_data;
+            size_t data_size = strlen(req_data);
+            char *buf = (char *) malloc(data_size + 1);
+            memcpy(buf, req_data, data_size);
+            buf[data_size] = '\0';
+
+            // Release HTTP struct and return content.
+            http_release( request );
+            return buf;
+        }
+
+        // Release buffer.
+        http_release( request );
+    }
+
+    return NULL;
+}
+
 
 
 #endif

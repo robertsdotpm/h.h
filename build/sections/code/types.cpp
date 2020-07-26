@@ -13,6 +13,7 @@ void *init_empty(void *p)
 
 void *new_summary()
 {
-    void *p_summary = new struct t_summary;
+    void *p_summary = malloc(sizeof(struct t_summary));
+    memset(p_summary, 0, sizeof(struct t_summary));
     return p_summary;
 }

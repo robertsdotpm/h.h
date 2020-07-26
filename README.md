@@ -1,8 +1,8 @@
 # #include "h.h"
 
-Welcome to h.h: a single-header C++14 library for bootstrapping new projects.
+Welcome to h.h: a single-header C/C++11 library for bootstrapping new projects. Now with C support!
 
-I built h.h because the development experience in C and C++ can be really painful. For this reason h.h has no external dependencies; only uses standard C features (so it will work with **32 bit web assembly!**); runs on **all major 64 bit operating systems**, and builds with most compilers without warnings. It even works with **Intel enclaves** (obviously not the socket code - but the algorithm stuff.)
+I built h.h because the development experience in C and C++ can be really painful. For this reason h.h has no external dependencies and only uses standard C features. I have found that using C++ STL means having vastly more portability problems. You'll find that web assembly often won't even compile C++. In contrast: this library works with **32 bit web assembly**; Runs on **all major 64 bit operating systems**; And builds with most compilers without warnings. It even works with **Intel enclaves** (obviously not the socket code - but the algorithm stuff.)
 
 There are many more planned features to be added to this project. But for now the modules bellow are what this header file supports.
 
@@ -179,32 +179,26 @@ PN(*is_admin);
 bool do_throw = true;
 bool str_is_hex = true; // Needs to start with pound sign.
 bool return_bytes = false;
-try
-{
-    pub = get_json_str(p_json, "[auth][pub]", 64, do_throw);
-    is_admin = get_json_no(p_json, "[auth][admin]", do_throw);
-    char *hex_pub = jstr_schema(p_json, "[auth][pub]", "^[a-fA-F0-9]+$", 64, str_is_hex, return_bytes, do_throw);
-    char exact_no_list[] = "1,2,";
-    struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0]);
 
-    /*
-    struct t_number *jno_schema(
-        StrMap* p_json_map, const char *key,
-        char *p_cstr_exact_list_filter=0,
-        struct t_number gte_filter=N(0),
-        struct t_number lte_filter=N(0),
-        unsigned int op=LOGIC_AND,
-        bool do_throw=true
-    );
-    */
+pub = get_json_str(p_json, "[auth][pub]", 64, do_throw);
+is_admin = get_json_no(p_json, "[auth][admin]", do_throw);
+char *hex_pub = jstr_schema(p_json, "[auth][pub]", "^[a-fA-F0-9]+$", 64, str_is_hex, return_bytes, do_throw);
+char exact_no_list[] = "1,2,";
+struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0]);
 
-    printf("Json validated.\r\n");
-}
-catch(...)
-{
-    // Don't care.
-    printf("json validation error \r\n");
-}
+/*
+struct t_number *jno_schema(
+    StrMap* p_json_map, const char *key,
+    char *p_cstr_exact_list_filter=0,
+    struct t_number gte_filter=N(0),
+    struct t_number lte_filter=N(0),
+    unsigned int op=LOGIC_AND,
+    bool do_throw=true
+);
+*/
+
+printf("Json validated.\r\n");
+
 ```
 
 ## Download a file from a URL <a name="a6"></a>

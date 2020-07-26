@@ -11,7 +11,7 @@ void delete_list_item(struct t_linked_item *list_item)
 		}
         */
 
-		delete list_item;
+		free(list_item);
 	}
 }
 
@@ -19,7 +19,7 @@ void delete_list_item(struct t_linked_item *list_item)
 struct t_linked_item * add_value_to_linked_list(struct t_linked_info *p_info, void *p_value)
 {
     // Make new list item container.
-    struct t_linked_item *p_item = new struct t_linked_item;
+    struct t_linked_item *p_item = (struct t_linked_item *) malloc(sizeof(struct t_linked_item));
     p_item->p_next = NULL;
     p_item->p_prev = NULL;
 
@@ -119,10 +119,11 @@ void remove_value_from_linked_list(
                         }
                         else
                         {
-                                throw "List no underflow";
+                                printf("List no underflow");
+                                exit(1);
                         }
 
-                        delete p_list_item;
+                        free(p_list_item);
                         p_list_item = 0;
                 }
 
@@ -229,7 +230,7 @@ void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_
 
 struct t_linked_info *create_linked_list_info()
 {
-    struct t_linked_info *p = new struct t_linked_info;
+    struct t_linked_info *p = (struct t_linked_info *) malloc(sizeof(struct t_linked_info));
     memset(p, 0, sizeof(struct t_linked_info));
     return p;
 }

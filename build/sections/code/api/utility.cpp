@@ -630,18 +630,18 @@ char *api_message(
     size_t api_msg_size = 0;
 
     // Layout of what an API message looks like.
-    const char api_msg_format[] = R"(
-    {
-        "call": "%s",
-        "params": "%s",
-        "reply_mode": "%s",
-        "nonce": "%s",
-        "enclave_report": "%s",
-        "auth": {
-            "pub": "%s",
-            "demo": "%d"
-        }
-    } )";
+    const char api_msg_format[] = 
+    "{"
+    "    \"call\": \"%s\","
+    "    \"params\": \"%s\","
+    "    \"reply_mode\": \"%s\","
+    "    \"nonce\": \"%s\","
+    "    \"enclave_report\": \"%s\","
+    "    \"auth\": {"
+    "        \"pub\": \"%s\","
+    "        \"demo\": \"%d\""
+    "    }"
+    "}";
 
     #if defined(INSIDE_ENCLAVE)
         // Set enclave report type.

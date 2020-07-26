@@ -236,7 +236,8 @@ uint32_t random32(void) {
   unsigned int ret = rand_bytes((unsigned char *) &buf, 4);
   if(ret != 4)
   {
-    throw "Unable to get entropy.";
+    printf("Unable to get entropy.\r\n");
+    exit(1);
   }
 
   return buf;

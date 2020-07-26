@@ -483,7 +483,8 @@ void *map_get_or_make(
 {
     if(!len && !init_func)
     {
-        throw "No way to initalise this value.";
+        printf("No way to initalise this value.\r\n");
+        exit(1);
     }
 
     void *p = 0;

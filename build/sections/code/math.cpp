@@ -40,7 +40,8 @@ struct t_number safe_dec(struct t_number no, uint128_t precision)
     // Max possible precision should be:
     if(no.precision > MAX_UINT128_PRECISION || precision > MAX_UINT128_PRECISION)
     {
-        throw "No.prec or prec > max_precision";
+        printf("No.prec or prec > max_precision\r\n");
+        exit(1);
     }
 
     // Calculate digits in number.
@@ -71,7 +72,8 @@ struct t_number safe_dec(struct t_number no, uint128_t precision)
         if(precision_difference > remaining_digits)
         {
             //if(no
-            throw "u Whole number can't fit with this precision upgrade.";
+            printf("u Whole number can't fit with this precision upgrade.\r\n");
+            exit(1);
         }
 
         // Exponent ** imp.
@@ -183,7 +185,8 @@ bool safe_logic(unsigned int op, struct t_number left, struct t_number right, ui
         return left.value != right.value;
     }
 
-    throw "Unknown logic op.";
+    printf("Unknown logic op.\r\n");
+    exit(1);
 }
 
 uint128_t Min(uint128_t left, uint128_t right)
@@ -243,7 +246,8 @@ struct t_number safe_mul(struct t_number left, struct t_number right)
     // Check for overflow before multiplying them.
     if(right.value > 0 && left.value > MAX_UINT128 / right.value)
     {
-        throw "Mul overflow.";
+        printf("Mul overflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -277,7 +281,8 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Check for overflow before adding them.
     if(left.value > 0 && right.value > MAX_UINT128 - left.value)
     {
-        throw "Add overflow.";
+        printf("Add overflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -301,7 +306,8 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Check for overflow before adding them.
     if(left.value < right.value)
     {
-        throw "Sub underflow.";
+        printf("Sub underflow.\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -360,7 +366,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Check for divide by zero.
     if(right.value == 0 || left.value == 0)
     {
-        throw "Div by zero";
+        printf("Div by zero\r\n");
+        exit(1);
     }
 
     // Attempt to simplify left and right to save digit space in uint128.
@@ -414,7 +421,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Avoid overflow after padding.
     if(left_digits + padding > MAX_UINT128_DIGITS)
     {
-        throw "Number result too large for this division.";
+        printf("Number result too large for this division.\r\n");
+        exit(1);
     }
 
     // Calculate intermediary padded result.
@@ -425,7 +433,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     // Exclude potential truncation errors from excessively large numbers.
     if(MAX_UINT128_DIGITS - whole_part_len < left.precision)
     {
-        throw "Result too large for decimal component.";
+        printf("Result too large for decimal component.\r\n");
+        exit(1);
     }
 
     // Check for division overflow errors.
@@ -435,7 +444,8 @@ struct t_number safe_div(struct t_number left, struct t_number right)
     );
     if(!safe_logic(BOTH_EQUALS, N(left.value, 0), derive_left, 0))
     {
-        throw "Division overflow error.";
+        printf("Division overflow error.\r\n");
+        exit(1);
     }
 
     // These assert lines bound the result by the inputs e.g.
@@ -486,7 +496,8 @@ struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limi
 
     if(limit > len)
     {
-        throw "No by index limit overflow";
+        printf("No by index limit overflow\r\n");
+        exit(1);
     }
 
     if(limit == 0)
@@ -554,7 +565,8 @@ struct t_number round(struct t_number no, uint128_t precision)
     uint128_t digits = count_digits(no.value);
     if(digits == 0)
     {
-        result = { 0, precision };
+        result.value = 0;
+        result.precision = precision;
         return result;
     }
 
@@ -591,7 +603,8 @@ struct t_number round(struct t_number no, uint128_t precision)
     {
         if(result.value == MAX_UINT128)
         {
-            throw "Can't round up value = overflow";
+            printf("Can't round up value = overflow\r\n");
+            exit(1);
         }
 
         result.value++;
@@ -612,7 +625,8 @@ struct t_number safe_math(
     // Precision too high.
     if(precision > MAX_UINT128_PRECISION)
     {
-        throw "Chosen t_number precision is too high.";
+        printf("Chosen t_number precision is too high.\r\n");
+        exit(1);
     }
 
     // Pad inputs.
@@ -646,7 +660,7 @@ uint128_t uint128_get_dec(struct t_number no)
     // Pad whole portion.
     uint128_t whole_unpadded = uint128_get_whole(no);
     t_number whole_padded = safe_dec(
-        { whole_unpadded, 0 }, no.precision
+        N(whole_unpadded, 0), no.precision
     );
 
     // Calculate decimal result.
@@ -672,7 +686,8 @@ struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t 
     // Check for divide by zero.
     if(right.value == 0)
     {
-        throw "Mod zero error";
+        printf("Mod zero error\r\n");
+        exit(1);
     }
 
     // Compute result.
@@ -755,7 +770,8 @@ t_number N(const char *s, uint128_t precision)
     // Handle precision underflows.
     if(dec_total && precision < s_precision && precision)
     {
-        throw "Insufficent prescision to handle storing this value";
+        printf("Insufficent prescision to handle storing this value\r\n");
+        exit(1);
     }
 
     // Assume whole number. (dec_total ? 333 : s_len - 1)
