@@ -10,6 +10,7 @@ def r(path):
 sections = [
     # Credits file needs to be part of H.H for copyright / license reasons.
     ["CREDITS", r],
+    ["LICENSE", r],
 
     # Includes and setup.
     ["includes", r],
