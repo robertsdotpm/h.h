@@ -51,7 +51,7 @@ buf  = """// AUTO GENERATED -- dont edit this file directly! Run single file bui
 # buf += "#pragma once\r\n"
 
 # Load all the headers first then implementation.
-for cat in [["header", "h"], ["code", "cpp"]]:
+for cat in [["header", "h"], ["code", "c"]]:
     dir, extension = cat
     if dir == "header":
         buf += "#ifndef H_H_%s\r\n" % (dir)
