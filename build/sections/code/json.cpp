@@ -103,7 +103,7 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 }
 
 // Put a value pulled from JSON in the hash map for the right key.
-void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info* linked_list)
+void json_save_key_pair(struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info* linked_list)
 {
 	// What is the tree type?
 	#ifdef JSON_DEBUG
@@ -143,7 +143,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 
 		p_json_expr->p_no = (struct t_number *) calloc(1, sizeof(struct t_number));
 		//assert(p_json_tokens->expr.p_no_str);
-		*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
+		*(p_json_expr->p_no) = Ns((char*) p_json_tokens->expr.p_no_str, 0);
 
     }
     else // String literals.
@@ -243,7 +243,7 @@ struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list,
 }
 
 // Process stream of JSON characters in order.
-unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info *linked_list)
+unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info *linked_list)
 {
 	#ifdef JSON_DEBUG
 		printf("%c=%d\r\n", *p_ch, p_json_tokens->expect);
@@ -541,7 +541,7 @@ struct t_json_tokens *new_json_tokens()
 }
 
 // Main function for decoding JSON.
-StrMap* json_decode(const char* json_str, size_t json_str_len)
+struct StrMap* json_decode(const char* json_str, size_t json_str_len)
 {
 	// Declare variables.
 	unsigned int json_error = 0;
@@ -551,7 +551,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 	struct t_json_tokens* p_json_tokens = 0;
 	struct t_json_tokens* p_json_tokens_sub_tree = 0;
 	struct t_linked_info* linked_list = 0;
-	StrMap* p_json = 0;
+	struct StrMap* p_json = 0;
 
 	// Function should be easy to use and accept
 	// any memory region that might quickly go out of scope
@@ -671,7 +671,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 		// Delete remaining sub trees.
 		if (linked_list)
 		{
-			delete_linked_list(linked_list);
+			delete_linked_list(linked_list, 0);
 		}
 
 		// Deallocate heap memory.
@@ -713,7 +713,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
     }
 */
 
-char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
+char *get_json_str(struct StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
 {
 	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
@@ -758,7 +758,7 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	}
 }
 
-struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
+struct t_number *get_json_no(struct StrMap* p_json_map, const char *key, bool do_throw)
 {
 	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
@@ -789,7 +789,7 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	}
 }
 
-char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw)
+char *jstr_schema(struct StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw)
 {
 	char *p_cstr_buf = get_json_str(p_json_map, key, str_len_limit, do_throw);
 	if(!p_cstr_buf) return 0;
@@ -860,7 +860,7 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 }
 
 struct t_number *jno_schema(
-	StrMap* p_json_map, const char *key,
+	struct StrMap* p_json_map, const char *key,
 	char *p_cstr_exact_list_filter,
 	struct t_number gte_filter,
 	struct t_number lte_filter,
@@ -895,7 +895,7 @@ struct t_number *jno_schema(
 				}
 
 				// Validate current number against this.
-				if(safe_logic(BOTH_EQUALS, N(p_cstr_exact_filter), *p_no))
+				if(safe_logic(BOTH_EQUALS, Ns(p_cstr_exact_filter, 0), *p_no, 0))
 				{
 					match_found = true;
 					break;
@@ -920,13 +920,13 @@ struct t_number *jno_schema(
 	}
 
 	// Process range filters.
-	if(safe_logic(NOT_EQUALS, gte_filter, N("0")) && safe_logic(NOT_EQUALS, lte_filter, N("0")))
+	if(safe_logic(NOT_EQUALS, gte_filter, Ns("0", 0), 0) && safe_logic(NOT_EQUALS, lte_filter, Ns("0", 0), 0))
 	{
 		// Do AND compare.
 		if(op == LOGIC_AND)
 		{
-			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no) &&
-				 safe_logic(LESS_EQUALS, lte_filter, *p_no)) )
+			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no, 0) &&
+				 safe_logic(LESS_EQUALS, lte_filter, *p_no, 0)) )
 			{
 				if(do_throw)
 				{
@@ -941,8 +941,8 @@ struct t_number *jno_schema(
 		// Do OR compare.
 		if(op == LOGIC_OR)
 		{
-			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no) ||
-				 safe_logic(LESS_EQUALS, lte_filter, *p_no)) )
+			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no, 0) ||
+				 safe_logic(LESS_EQUALS, lte_filter, *p_no, 0)) )
 			{
 				if(do_throw)
 				{

@@ -742,9 +742,9 @@ void assert_uint128_t(uint128_t left, uint128_t right)
 	if (left != right)
 	{
 		printf("Assert failed [left, right]: \r\n");
-		print_uint128_t(left);
+		print_uint128_t(left, 0);
 		printf("\r\n");
-		print_uint128_t(right);
+		print_uint128_t(right, 0);
 		assert(0);
 	}
 }
@@ -757,7 +757,7 @@ unsigned char * Z(unsigned char *c_str, size_t from_size_of)
     return c_str;
 }
 
-void PN(t_number no)
+void PN(struct t_number no)
 {
     print_uint128_t(no.value, no.precision);
     printf("\r\n");

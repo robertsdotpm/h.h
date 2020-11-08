@@ -22,7 +22,7 @@ There are many more planned features to be added to this project. But for now th
 
 ## Using the library <a name="a1"></a>
 
-``` cpp
+``` c
 #define H_H
 #include "h.h"
 
@@ -41,31 +41,31 @@ It supports mixed precision math with a max size depending on the size of the wh
 
 Since the max number that fits inside 64 bits is (2 ** 64) - 1 = 18446744073709551615 this is 20 digits long -- the max precision to use would be 19 because you want to be able to fit every possible column value.
 
-``` cpp
-struct t_number a = N("10.1337");
-struct t_number b = N("342243.34134134234");
+``` c
+struct t_number a = Ns("10.1337", 0);
+struct t_number b = Ns("342243.34134134234", 0);
 struct t_number result = safe_math(&safe_mul, a, b, 4); // Precision = 4.
 PN(result);
 
 // Throws an error if precision overflows.
-PN( safe_math(&safe_add, a, b) );
+PN( safe_math(&safe_add, a, b, 0) );
 
 // Divide and use highest precision possible.
-struct t_number x = safe_math(&safe_div, N(2), N("0.23"));
+struct t_number x = safe_math(&safe_div, Nu(2, 0), Ns("0.23", 0), 0);
 
 // Round down.
-PN( round( N("10.1234"), 3 ) );
+PN( safe_round( Ns("10.1234", 0), 3 ) );
 
 // Round up.
-PN( round( N("10.1235"), 3 ) );
+PN( safe_round( Ns("10.1235", 0), 3 ) );
 
 // Subtract -- mixed precision -- and padded right.
-struct t_number c = N("12.3", 3);
-struct t_number d = N("5.02", 5);
+struct t_number c = Ns("12.3", 3);
+struct t_number d = Ns("5.02", 5);
 PN( safe_math(&safe_sub, c, d, 6) );
 
 // Logic expressions
-if( safe_logic(GREATER_THAN, c, d) )
+if( safe_logic(GREATER_THAN, c, d, 6) )
 {
     printf("c is > d\r\n");
 }
@@ -85,13 +85,13 @@ if( safe_logic(GREATER_THAN, c, d) )
 
 AKA looking up 'variables' by a named key. The hashmap implementation here supports any type of variable at the expense of having to typecast it back upon retrieval.
 
-``` cpp
+``` c
 // Create hashmap.
 unsigned int assoc_size = 1024 * 64;
-StrMap *p_map = map_create(assoc_size);
+struct StrMap *p_map = map_create(assoc_size);
 
 // Put arbitrary objects in hashmap.
-struct t_number some_obj = N(10);
+struct t_number some_obj = Nu(10, 0);
 unsigned char typical_c_str[] = "test";
 map_put(p_map, "obj1", &some_obj);
 map_put(p_map, "obj2", &typical_c_str);
@@ -110,15 +110,17 @@ p_map = NULL;
 
 Based on the simple linked list data structure.
 
-``` cpp
+``` c
 // Create linked list
 struct t_linked_info *p_list = create_linked_list_info();
 
 // Add items to linked list.
-struct t_number a_no = N("2");
-struct t_number b_no = N("0");
+struct t_number a_no = Ns("2", 0);
+struct t_number b_no = Ns("0", 0);
 add_value_to_linked_list(p_list, &a_no);
 add_value_to_linked_list(p_list, &b_no);
+
+
 
 // Loop over list and display items.
 struct t_linked_item *p_item = NULL; 
@@ -137,41 +139,39 @@ p_item = linked_list_pop(p_list);
 printf("List len: %d\r\n", p_list->no); // 0.
 
 // Destroy list.
-delete_linked_list(p_list);
+delete_linked_list(p_list, 0);
 
-/* 
-Join two lists: 
 
-    void join_linked_lists(
-        struct t_linked_info *list_a,
-        struct t_linked_info *list_b
-    )
-
-This will add list_b to list_a in place.
-*/
+//Join two lists: 
+//
+//    void join_linked_lists(
+//        struct t_linked_info *list_a,
+//        struct t_linked_info *list_b
+//    )
+//
+//This will add list_b to list_a in place.
 ```
 
 ## JSON support <a name="a5"></a>
 
 The good thing about this JSON module is it allows for simple key-value lookup. Most libraries in C and C++ force you to write a pseudo-parser just to access the JSON data. Why can't we have simple software in C?
 
-``` cpp
+``` c
 // Index JSON.
-char json_str[] = R"("
-{
-    "call": "api_call",
-    "auth": {
-        "pub": "03A5D5B431FD8F95E1B156DEC8F6E5D657C03C6D755F0DBEFDF844781F04FB14",
-        "demo": "2",
-        "admin": 4
-    }
-}
-)";
-StrMap* p_json = json_decode(json_str, strlen(json_str));
+char json_str[] = 
+"{"
+"    \"call\": \"api_call\","
+"    \"auth\": {"
+"        \"pub\": \"03A5D5B431FD8F95E1B156DEC8F6E5D657C03C6D755F0DBEFDF844781F04FB14\","
+"        \"demo\": \"2\","
+"        \"admin\": 4"
+"    }"
+"}";
+struct StrMap* p_json = json_decode(json_str, strlen(json_str));
 
 // Get an item from JSON by key.
-char *pub = get_json_str(p_json, "[auth][pub]");
-struct t_number *is_admin = get_json_no(p_json, "[auth][admin]");
+char *pub = get_json_str(p_json, "[auth][pub]", 0, 0);
+struct t_number *is_admin = get_json_no(p_json, "[auth][admin]", 0);
 printf("%s\r\n", pub);
 PN(*is_admin);
 
@@ -184,18 +184,20 @@ pub = get_json_str(p_json, "[auth][pub]", 64, do_throw);
 is_admin = get_json_no(p_json, "[auth][admin]", do_throw);
 char *hex_pub = jstr_schema(p_json, "[auth][pub]", "^[a-fA-F0-9]+$", 64, str_is_hex, return_bytes, do_throw);
 char exact_no_list[] = "1,2,";
-struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0]);
+struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0], Ns("0", 0), Ns("0", 0), LOGIC_AND, 0 );
 
-/*
-struct t_number *jno_schema(
-    StrMap* p_json_map, const char *key,
-    char *p_cstr_exact_list_filter=0,
-    struct t_number gte_filter=N(0),
-    struct t_number lte_filter=N(0),
-    unsigned int op=LOGIC_AND,
-    bool do_throw=true
-);
-*/
+
+
+
+//struct t_number *jno_schema(
+//  struct StrMap* p_json_map, const char *key,
+//  char *p_cstr_exact_list_filter=0,
+//  struct t_number gte_filter=N(0),
+//  struct t_number lte_filter=N(0),
+//  unsigned int op=LOGIC_AND,
+//  bool do_throw=true
+//);
+
 
 printf("Json validated.\r\n");
 
@@ -219,7 +221,7 @@ Ignore memctx by passing in a NULL and then pass in a URL encoded string for the
 
 ## Match a string <a name="a8"></a>
 
-``` cpp
+``` c
 char heystack[] = {"DeAdBeEF1122"};
 if(re_match("^[a-fA-F0-9]+$", heystack))
 {
@@ -231,7 +233,7 @@ if(re_match("^[a-fA-F0-9]+$", heystack))
 
 Shows how to make a fingerprint for a message using sha256 hashing and signs the fingerprint using ECDSA with the secp256k1 curve.
 
-``` cpp
+``` c
 int status = 0;
 char msg[] = {"test"};
 uint8_t digest[32 + 1] = {};
@@ -256,9 +258,8 @@ if(status == 0)
 
 Single-threaded, polling-based web server. Demonstrates how to support URL variables, POST content, JSON processing, and serving static files. The dispatch function is where you would add custom code to implement a REST API.
 
-``` cpp
+``` c
 
-// This is your function for handling requests.
 int dispatch(struct wby_con *connection, void *userdata, void *server)
 {
     // Main structs.
@@ -274,7 +275,7 @@ int dispatch(struct wby_con *connection, void *userdata, void *server)
         if(!post_content) return 0;
 
         // POST a field called json with the content as valid json.
-        StrMap *p_json = post_json_eq_to_json(post_content);
+        struct StrMap *p_json = post_json_eq_to_json(post_content);
         if(!p_json) return 0;
 
         // Then you write your code to manipulate it here...
@@ -287,36 +288,37 @@ int dispatch(struct wby_con *connection, void *userdata, void *server)
         return 0;
     }
 
-    /*
-    If you want to support API requests you could check for /api/
-    in the URL and run your code there otherwise call server_static_file.
-    E.g.
-    if (strncmp_s("/api", 4, connection->request.uri, url_len, 4) != 0)
-    {
-        ... serve static file
-    }
-    else
-    {
-        ... handle api calls
-    }
-    */
+    
+    //If you want to support API requests you could check for /api/
+    //in the URL and run your code there otherwise call server_static_file.
+    //E.g.
+    //if (strncmp_s("/api", 4, connection->request.uri, url_len, 4) != 0)
+    //{
+    //    ... serve static file
+    //}
+    //else
+    //{
+    //    ... handle api calls
+    //}
+    
+    
 }
 
 // Start the web server.
 void http_server_start()
 {
     // Data structs for server.
-	void* memory = NULL;
-	wby_size needed_memory = 0;
-	struct server_state state;
-	struct wby_server server;
-	struct wby_config config;
+    void* memory = NULL;
+    wby_size needed_memory = 0;
+    struct server_state state;
+    struct wby_server server;
+    struct wby_config config;
 
-	// Start web server.
-	wby_config("127.0.0.1", 12344, &state, &config, dispatch);
-	wby_init(&server, &config, &needed_memory);
-	memory = calloc(needed_memory, 1);
-	wby_start(&server, &state, memory);
+    // Start web server.
+    wby_config("127.0.0.1", 12344, &state, &config, dispatch);
+    wby_init(&server, &config, &needed_memory);
+    memory = calloc(needed_memory, 1);
+    wby_start(&server, &state, memory);
 }
 
 ```
@@ -325,7 +327,7 @@ void http_server_start()
 
 Here's a snippet of some useful function prototypes from the utility module. There's implementations of some safe string handling functions here too.
 
-``` cpp
+``` c
 
 size_t hexstr_to_bytes(const char* hexstr, size_t len, unsigned char *out, size_t out_size);
 size_t bytes_to_hex(unsigned char *b_str, size_t b_str_len, unsigned char *out, size_t out_len);

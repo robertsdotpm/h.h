@@ -92,7 +92,7 @@ struct t_summary {
 struct t_portfolio {
     unsigned int no;
 
-    StrMap *by_currency;
+    struct StrMap *by_currency;
 };
 
 // Point to a list of asset holdings based on account.
@@ -118,7 +118,7 @@ struct t_state {
     // Next 32 bytes = encryption priv key.
     uint8_t *p_master_seed;
 
-    StrMap *accounts;
+    struct StrMap *accounts;
 
     unsigned int active_offers;
     struct t_offer offers[OFFERS_CAPACITY];
@@ -126,7 +126,7 @@ struct t_state {
     unsigned int active_matches;
 
     // Doubly linked list of t_match.
-    StrMap *matches;
+    struct StrMap *matches;
 
     //map<char *, struct t_pending_matches> pending_matches;
 };

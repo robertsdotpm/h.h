@@ -6,19 +6,19 @@ struct StrMap *sm_new(unsigned int capacity)
 {
     struct StrMap *map;
 
-    map = (struct StrMap *) malloc(sizeof(StrMap));
+    map = (struct StrMap *) malloc(sizeof(struct StrMap));
     if (map == NULL) {
         return NULL;
     }
     map->count = capacity;
-    map->buckets = (struct Bucket *) malloc(map->count * sizeof(Bucket));
+    map->buckets = (struct Bucket *) malloc(map->count * sizeof(struct Bucket));
     if (map->buckets == NULL) {
         printf("CANT ALLOCATE BUCKETS \r\n");
         free(map);
         assert(0);
         return NULL;
     }
-    memset(map->buckets, 0, map->count * sizeof(Bucket));
+    memset(map->buckets, 0, map->count * sizeof(struct Bucket));
     return map;
 }
 
@@ -36,11 +36,11 @@ void sm_iter(const char *key, const char *value, const void *obj)
     }
 }
 
-void sm_delete(StrMap *map)
+void sm_delete(struct StrMap *map)
 {
     unsigned int i, j, n, m;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return;
@@ -66,11 +66,11 @@ void sm_delete(StrMap *map)
     free(map);
 }
 
-size_t sm_get(const StrMap *map, const char *key, char *out_buf, size_t n_out_buf)
+size_t sm_get(const struct StrMap *map, const char *key, char *out_buf, size_t n_out_buf)
 {
     unsigned int index;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         #if defined(JSON_DEBUG)
@@ -125,11 +125,11 @@ size_t sm_get(const StrMap *map, const char *key, char *out_buf, size_t n_out_bu
     return 1;
 }
 
-int sm_exists(const StrMap *map, const char *key)
+int sm_exists(const struct StrMap *map, const char *key)
 {
     unsigned int index;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -146,11 +146,11 @@ int sm_exists(const StrMap *map, const char *key)
     return 1;
 }
 
-size_t sm_put(StrMap *map, const char *key, const char *value)
+size_t sm_put(struct StrMap *map, const char *key, const char *value)
 {
     size_t key_len, value_len, index;
-    Bucket *bucket;
-    Pair *tmp_pairs, *pair;
+    struct Bucket *bucket;
+    struct Pair *tmp_pairs, *pair;
     char *tmp_value;
     char *new_key, *new_value;
 
@@ -239,7 +239,7 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
         /* The bucket is empty, lazily allocate space for a single
          * key-value pair.
          */
-        bucket->pairs = (struct Pair *) malloc(sizeof(Pair));
+        bucket->pairs = (struct Pair *) malloc(sizeof(struct Pair));
         if (bucket->pairs == NULL) {
             free(new_key);
             free(new_value);
@@ -257,7 +257,7 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
         /* The bucket wasn't empty but no pair existed that matches the provided
          * key, so create a new key-value pair.
          */
-        tmp_pairs = (struct Pair *) realloc(bucket->pairs, (bucket->count + 1) * sizeof(Pair));
+        tmp_pairs = (struct Pair *) realloc(bucket->pairs, (bucket->count + 1) * sizeof(struct Pair));
         if (tmp_pairs == NULL) {
             free(new_key);
             free(new_value);
@@ -304,12 +304,12 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
     return 1;
 }
 
-size_t sm_get_count(const StrMap *map)
+size_t sm_get_count(const struct StrMap *map)
 {
     size_t i, j, n, m;
     size_t count;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -333,11 +333,11 @@ size_t sm_get_count(const StrMap *map)
     return count;
 }
 
-int sm_enum(const StrMap *map, sm_enum_func enum_func, const void *obj)
+int sm_enum(const struct StrMap *map, sm_enum_func enum_func, const void *obj)
 {
     unsigned int i, j, n, m;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -367,10 +367,10 @@ int sm_enum(const StrMap *map, sm_enum_func enum_func, const void *obj)
  * Returns a pair from the bucket that matches the provided key,
  * or null if no such pair exist.
  */
-static Pair * get_pair(Bucket *bucket, const char *key)
+static struct Pair * get_pair(struct Bucket *bucket, const char *key)
 {
     unsigned int i, n;
-    Pair *pair;
+    struct Pair *pair;
 
     n = bucket->count;
     if (n == 0) {
@@ -412,17 +412,17 @@ static unsigned long map_hash(const char *str)
     return hash;
 }
 
-StrMap *map_create(unsigned int capacity)
+struct StrMap *map_create(unsigned int capacity)
 {
     return sm_new(capacity);
 }
 
-void map_destroy(StrMap *p_map)
+void map_destroy(struct StrMap *p_map)
 {
     sm_delete(p_map);
 }
 
-size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
+size_t map_put(struct StrMap *p_map, const char *p_key, void *p_value)
 {
     uint64_t value_address_no = (uint64_t) p_value;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
@@ -432,7 +432,7 @@ size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
     return sm_put(p_map, p_key, (const char *) value_address_str);
 }
 
-void *map_get(StrMap *p_map, const char *p_key)
+void *map_get(struct StrMap *p_map, const char *p_key)
 {
     size_t result = 0;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
@@ -445,7 +445,7 @@ void *map_get(StrMap *p_map, const char *p_key)
     }
     else
     {
-        uint64_t value_address_no = (uint64_t) N(value_address_str, 0).value;
+        uint64_t value_address_no = (uint64_t) Ns(value_address_str, 0).value;
         void *p_value = 0;
 
         #if defined(__i386__) || defined(EMSCRIPTEN) || (!defined(_WIN64) && defined(_WIN32))

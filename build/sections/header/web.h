@@ -154,7 +154,6 @@ int main(int argc, const char * argv[])
 #define WBY_H_
 
 #include <stdarg.h>
-#include <cstdarg>
 
 #ifdef __cplusplus
 extern "C" {
@@ -327,7 +326,8 @@ void wby_init(struct wby_server*, const struct wby_config*,
     Output:
     -   needed memory for the server to run
 */
-int wby_start(struct wby_server*, void *memory);
+int
+wby_start(struct wby_server *server, struct server_state *state, void *memory);
 /*  this function starts running the server in the specificed memory space. Size
  *  must be at least big enough as determined in the wby_server_init().
     Input:
@@ -441,7 +441,7 @@ void wby_config(const char *address, unsigned int port, struct server_state* sta
 
 char *get_post_buf(struct wby_con *connection, struct wby_server *svr);
 
-StrMap *post_json_eq_to_json(char *post_content);
+struct StrMap *post_json_eq_to_json(char *post_content);
 
 unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection);
 

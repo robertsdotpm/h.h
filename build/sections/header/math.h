@@ -17,17 +17,17 @@ enum e_logic_ops {
     LOGIC_OR = 7
 };
 
-bool safe_logic(unsigned int op, struct t_number left, struct t_number right, uint128_t precision=1000);
+bool safe_logic(unsigned int op, struct t_number left, struct t_number right, uint128_t precision);
 
-uint128_t Min(uint128_t left, uint128_t right);
+uint128_t min_u(uint128_t left, uint128_t right);
 
-uint128_t Max(uint128_t left, uint128_t right);
+uint128_t max_u(uint128_t left, uint128_t right);
 
-struct t_number Min(struct t_number left, struct t_number right);
+struct t_number min_t(struct t_number left, struct t_number right);
 
-struct t_number Max(struct t_number left, struct t_number right);
+struct t_number max_t(struct t_number left, struct t_number right);
 
-struct t_number N(uint128_t value, uint128_t precision=1000);
+struct t_number Nu(uint128_t value, uint128_t precision);
 
 struct t_number safe_mul(struct t_number left, struct t_number right);
 
@@ -41,24 +41,24 @@ struct t_number safe_div(struct t_number left, struct t_number right);
 
 struct t_number simplify_insignificant(struct t_number no);
 
-struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limit=0);
+struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limit);
 
-struct t_number round(struct t_number no, uint128_t precision);
+struct t_number safe_round(struct t_number no, uint128_t precision);
 
 struct t_number safe_math(
     struct t_number (*math_op)
         (struct t_number, struct t_number),
-    struct t_number left, struct t_number right, uint128_t precision=1000);
+    struct t_number left, struct t_number right, uint128_t precision);
 
 struct t_dec {
     uint128_t whole;
-    t_number dec;
+    struct t_number dec;
 };
 
 uint128_t uint128_get_whole(struct t_number no);
 
 uint128_t uint128_get_dec(struct t_number no);
 
-struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t precision=0);
+struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t precision);
 
-t_number N(const char *s, uint128_t precision=0);
+struct t_number Ns(const char *s, uint128_t precision);

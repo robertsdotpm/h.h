@@ -189,7 +189,7 @@ bool safe_logic(unsigned int op, struct t_number left, struct t_number right, ui
     exit(1);
 }
 
-uint128_t Min(uint128_t left, uint128_t right)
+uint128_t min_u(uint128_t left, uint128_t right)
 {
     if(left <= right)
     {
@@ -199,7 +199,7 @@ uint128_t Min(uint128_t left, uint128_t right)
     return right;
 }
 
-uint128_t Max(uint128_t left, uint128_t right)
+uint128_t max_u(uint128_t left, uint128_t right)
 {
     if(left >= right)
     {
@@ -209,9 +209,9 @@ uint128_t Max(uint128_t left, uint128_t right)
     return right;
 }
 
-struct t_number Min(struct t_number left, struct t_number right)
+struct t_number min_t(struct t_number left, struct t_number right)
 {
-    if(safe_logic(LESS_EQUALS, left, right))
+    if(safe_logic(LESS_EQUALS, left, right, 0))
     {
         return left;
     }
@@ -219,9 +219,9 @@ struct t_number Min(struct t_number left, struct t_number right)
     return right;
 }
 
-struct t_number Max(struct t_number left, struct t_number right)
+struct t_number max_t(struct t_number left, struct t_number right)
 {
-    if(safe_logic(GREATER_EQUALS, left, right))
+    if(safe_logic(GREATER_EQUALS, left, right, 0))
     {
         return left;
     }
@@ -229,10 +229,10 @@ struct t_number Max(struct t_number left, struct t_number right)
     return right;
 }
 
-t_number N(uint128_t value, uint128_t precision)
+struct t_number Nu(uint128_t value, uint128_t precision)
 {
     // Pack results into t_number.
-    t_number result = { value, 0 };
+    struct t_number result = { value, 0 };
     if(precision != 1000)
     {
         result = safe_dec(result, precision);
@@ -274,8 +274,8 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Line up decimal points.
     if(left.precision != right.precision)
     {
-        left = safe_dec(left, Max(left.precision, right.precision));
-        right = safe_dec(right, Max(left.precision, right.precision));
+        left = safe_dec(left, max_u(left.precision, right.precision));
+        right = safe_dec(right, max_u(left.precision, right.precision));
     }
 
     // Check for overflow before adding them.
@@ -288,7 +288,7 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Compute result.
     struct t_number result = {
         left.value + right.value,
-        Max(left.precision, right.precision)
+        max_u(left.precision, right.precision)
     };
 
     return result;
@@ -299,8 +299,8 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Line up decimal points.
     if(left.precision != right.precision)
     {
-        left = safe_dec(left, Max(left.precision, right.precision));
-        right = safe_dec(right, Max(left.precision, right.precision));
+        left = safe_dec(left, max_u(left.precision, right.precision));
+        right = safe_dec(right, max_u(left.precision, right.precision));
     }
 
     // Check for overflow before adding them.
@@ -320,7 +320,7 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Return result.
     struct t_number no = {
         result,
-        Max(left.precision, right.precision)
+        max_u(left.precision, right.precision)
     };
 
     return no;
@@ -439,10 +439,10 @@ struct t_number safe_div(struct t_number left, struct t_number right)
 
     // Check for division overflow errors.
     struct t_number derive_left = safe_add(
-            safe_mul(N(whole_part, 0), N(right.value, 0)),
-            N(left.value % right.value, 0)
+            safe_mul(Nu(whole_part, 0), Nu(right.value, 0)),
+            Nu(left.value % right.value, 0)
     );
-    if(!safe_logic(BOTH_EQUALS, N(left.value, 0), derive_left, 0))
+    if(!safe_logic(BOTH_EQUALS, Nu(left.value, 0), derive_left, 0))
     {
         printf("Division overflow error.\r\n");
         exit(1);
@@ -559,7 +559,7 @@ struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limi
     return answer;
 }
 
-struct t_number round(struct t_number no, uint128_t precision)
+struct t_number safe_round(struct t_number no, uint128_t precision)
 {
     struct t_number result;
     uint128_t digits = count_digits(no.value);
@@ -577,7 +577,7 @@ struct t_number round(struct t_number no, uint128_t precision)
 
     // Get trailing digit and mid value.
     uint128_t whole_len = (digits - no.precision);
-    struct t_number surplus = no_by_index(no, whole_len + (precision));
+    struct t_number surplus = no_by_index(no, whole_len + (precision), 0);
     if(!surplus.value)
     {
         return no;
@@ -638,7 +638,7 @@ struct t_number safe_math(
     }
 
     // Calculate result.
-    t_number result = (*math_op) (left, right);
+    struct t_number result = (*math_op) (left, right);
 
     // Truncate or pad result as needed to required precision.
     result = safe_dec(result, precision);
@@ -648,7 +648,7 @@ struct t_number safe_math(
 
 uint128_t uint128_get_whole(struct t_number no)
 {
-    t_number temp = safe_dec(no, 0);
+    struct t_number temp = safe_dec(no, 0);
 
     uint128_t result = temp.value;
 
@@ -659,15 +659,16 @@ uint128_t uint128_get_dec(struct t_number no)
 {
     // Pad whole portion.
     uint128_t whole_unpadded = uint128_get_whole(no);
-    t_number whole_padded = safe_dec(
-        N(whole_unpadded, 0), no.precision
+    struct t_number whole_padded = safe_dec(
+        Nu(whole_unpadded, 0), no.precision
     );
 
     // Calculate decimal result.
-    t_number temp = safe_math(
+    struct t_number temp = safe_math(
         &safe_sub,
         no,
-        whole_padded
+        whole_padded,
+        0
     );
 
     uint128_t result = temp.value;
@@ -699,14 +700,10 @@ struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t 
     return result;
 }
 
-t_number N(const char *s, uint128_t precision)
+struct t_number Ns(const char *s, uint128_t precision)
 {
     // Someone forgot to use quotes.
     assert(s != 0);
-
-
-
-
 
     uint128_t value = 0;
     uint128_t s_precision = 0;
@@ -780,7 +777,7 @@ t_number N(const char *s, uint128_t precision)
 
 
     // Pack results into t_number.
-    t_number result = { value, existing_prec };
+    struct t_number result = { value, existing_prec };
 
     // Ensure input is stored (and / or truncated) to this len.
     if(precision)

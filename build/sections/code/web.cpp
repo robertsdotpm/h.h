@@ -1,5 +1,4 @@
 #include <stdarg.h>
-#include <cstdarg>
 
 typedef int wby__check_ptr_size[(sizeof(void*) == sizeof(WBY_UINT_PTR)) ? 1 : -1];
 #define WBY_LEN(a) (sizeof(a)/sizeof((a)[0]))
@@ -29,7 +28,6 @@ WBY_API void
 wby_dbg(wby_log_f log, const char *fmt, ...)
 {
 	#include <stdarg.h>
-	#include <cstdarg>
 
     char buffer[1024];
     va_list args;
@@ -1738,7 +1736,7 @@ char *get_post_buf(struct wby_con *connection, struct wby_server *svr)
 	return NULL;
 }
 
-StrMap *post_json_eq_to_json(char *post_content)
+struct StrMap *post_json_eq_to_json(char *post_content)
 {
 	char *json_str = strstr((char* const) post_content, "json=");
 	if (json_str)

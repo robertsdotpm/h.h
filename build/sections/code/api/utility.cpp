@@ -106,7 +106,7 @@ uint8_t *sign_json_payload(char *json_str, size_t size, uint8_t *priv_key)
     return sig_hex;
 }
 
-bool valid_json_sig(char *json_str, size_t size, StrMap* p_json)
+bool valid_json_sig(char *json_str, size_t size, struct StrMap* p_json)
 {
     // Get sig offsets.
     size_t sig_len = 0;
@@ -336,7 +336,7 @@ bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf, siz
     bool msg_is_valid = false;
     bool valid_user_pub_sig = false;
     char *json_str = 0;
-    StrMap *p_json_map = 0;
+    struct StrMap *p_json_map = 0;
     uint8_t *p_report = 0;
     char *nonce_hex = 0;
     char *pub_key_hex = 0;

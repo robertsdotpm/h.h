@@ -28,9 +28,9 @@
 
 #endif
 
-#include <random>
-#include <cstdio>
-#include <cstring>
+
+#include <stdio.h>
+#include <string.h>
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
@@ -40,15 +40,9 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <cstdarg>
 #include <stdint.h>
-#include <algorithm>
-#include <climits>
-#include <cstdint>
-#include <limits>
-#include <stdexcept>
-#include <string>
-#include <type_traits>
+#include <limits.h>
+//#include <type_traits.h>
 #include <stdbool.h>
 #include <setjmp.h>
 
@@ -75,7 +69,7 @@ inline int access(const char *pathname, int mode) {
 #include <unistd.h>
 #include <strings.h>
 #include <sys/param.h>
-#include <sys/endian.h>
+#include <endian.h>
 #endif
 
 

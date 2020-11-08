@@ -69,8 +69,8 @@ void remove_value_from_linked_list(
         struct t_linked_info *list, void *value
         )
 {
-        t_linked_item *p_list_item = list->p_list_start;
-        t_linked_item *p_next = NULL;
+        struct t_linked_item *p_list_item = list->p_list_start;
+        struct t_linked_item *p_next = NULL;
         while(p_list_item != NULL)
         {
                 p_next = (struct t_linked_item *) p_list_item->p_next;
@@ -136,8 +136,8 @@ void remove_values_from_linked_list(
     struct t_linked_info *needle_list
 )
 {
-    t_linked_item *needle_item = needle_list->p_list_start;
-    t_linked_item *p_next = NULL;
+    struct t_linked_item *needle_item = needle_list->p_list_start;
+    struct t_linked_item *p_next = NULL;
     while(needle_item != NULL)
     {
         p_next = (struct t_linked_item *) needle_item->p_next;

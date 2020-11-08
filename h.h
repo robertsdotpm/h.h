@@ -735,9 +735,9 @@ Public License instead of this License.  But first, please read
 
 #endif
 
-#include <random>
-#include <cstdio>
-#include <cstring>
+
+#include <stdio.h>
+#include <string.h>
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
@@ -747,15 +747,9 @@ Public License instead of this License.  But first, please read
 #include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <cstdarg>
 #include <stdint.h>
-#include <algorithm>
-#include <climits>
-#include <cstdint>
-#include <limits>
-#include <stdexcept>
-#include <string>
-#include <type_traits>
+#include <limits.h>
+//#include <type_traits.h>
 #include <stdbool.h>
 #include <setjmp.h>
 
@@ -782,7 +776,7 @@ inline int access(const char *pathname, int mode) {
 #include <unistd.h>
 #include <strings.h>
 #include <sys/param.h>
-#include <sys/endian.h>
+#include <endian.h>
 #endif
 
 
@@ -1354,7 +1348,7 @@ size_t strnlen_s(const char *s, size_t maxsize);
 #endif
 
 #ifndef _MSC_VER
-size_t strncpy_s(const char *dest, size_t dest_size, const char *src, size_t src_count);
+size_t strncpy_s(char *dest, size_t dest_size, const char *src, size_t src_count);
 #endif
 
 int strncmp_s(const char* dest, size_t dest_size, const char* src, size_t src_size, size_t count);
@@ -1367,19 +1361,19 @@ size_t bytes_to_hex(unsigned char* b_str, size_t b_str_len, unsigned char* out, 
 
 void hex_print(uint8_t *buf, size_t size);
 
-bool A(unsigned char *c_str, unsigned int do_throw=0);
+bool A(unsigned char *c_str, unsigned int do_throw);
 
 void reverse(char s[]);
 
 void itoa(uint128_t n, char s[]);
 
-int print_uint128_t(uint128_t u128, uint128_t precision=0);
+int print_uint128_t(uint128_t u128, uint128_t precision);
 
 void assert_uint128_t(uint128_t left, uint128_t right);
 
 unsigned char * Z(unsigned char *c_str, size_t from_size_of);
 
-void PN(t_number no);
+void PN(struct t_number no);
 
 void delete_t_number(void *p);
 
@@ -1452,7 +1446,7 @@ void join_linked_lists(
 
 struct t_linked_item * linked_list_pop(struct t_linked_info *list);
 
-void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_value)(void *)=0);
+void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_value)(void *));
 
 struct t_linked_info *create_linked_list_info();
 
@@ -1475,17 +1469,17 @@ enum e_logic_ops {
     LOGIC_OR = 7
 };
 
-bool safe_logic(unsigned int op, struct t_number left, struct t_number right, uint128_t precision=1000);
+bool safe_logic(unsigned int op, struct t_number left, struct t_number right, uint128_t precision);
 
-uint128_t Min(uint128_t left, uint128_t right);
+uint128_t min_u(uint128_t left, uint128_t right);
 
-uint128_t Max(uint128_t left, uint128_t right);
+uint128_t max_u(uint128_t left, uint128_t right);
 
-struct t_number Min(struct t_number left, struct t_number right);
+struct t_number min_t(struct t_number left, struct t_number right);
 
-struct t_number Max(struct t_number left, struct t_number right);
+struct t_number max_t(struct t_number left, struct t_number right);
 
-struct t_number N(uint128_t value, uint128_t precision=1000);
+struct t_number Nu(uint128_t value, uint128_t precision);
 
 struct t_number safe_mul(struct t_number left, struct t_number right);
 
@@ -1499,27 +1493,27 @@ struct t_number safe_div(struct t_number left, struct t_number right);
 
 struct t_number simplify_insignificant(struct t_number no);
 
-struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limit=0);
+struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limit);
 
-struct t_number round(struct t_number no, uint128_t precision);
+struct t_number safe_round(struct t_number no, uint128_t precision);
 
 struct t_number safe_math(
     struct t_number (*math_op)
         (struct t_number, struct t_number),
-    struct t_number left, struct t_number right, uint128_t precision=1000);
+    struct t_number left, struct t_number right, uint128_t precision);
 
 struct t_dec {
     uint128_t whole;
-    t_number dec;
+    struct t_number dec;
 };
 
 uint128_t uint128_get_whole(struct t_number no);
 
 uint128_t uint128_get_dec(struct t_number no);
 
-struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t precision=0);
+struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t precision);
 
-t_number N(const char *s, uint128_t precision=0);
+struct t_number Ns(const char *s, uint128_t precision);
 
 typedef void(*sm_enum_func)(const char *key, const char *value, const void *obj);
 
@@ -1530,54 +1524,54 @@ struct Pair {
 
 struct Bucket {
     unsigned int count;
-    Pair *pairs;
+    struct Pair *pairs;
 };
 
 struct StrMap {
     unsigned int count;
-    Bucket *buckets;
+    struct Bucket *buckets;
 };
 
-static Pair * get_pair(Bucket *bucket, const char *key);
+static struct Pair * get_pair(struct Bucket *bucket, const char *key);
 static unsigned long map_hash(const char *str);
 
 struct StrMap *sm_new(unsigned int capacity);
 
 void sm_iter(const char *key, const char *value, const void *obj);
 
-void sm_delete(StrMap *map);
+void sm_delete(struct StrMap *map);
 
-size_t sm_get(const StrMap *map, const char *key, char *out_buf, unsigned int n_out_buf);
+size_t sm_get(const struct StrMap *map, const char *key, char *out_buf, size_t n_out_buf);
 
-int sm_exists(const StrMap *map, const char *key);
+int sm_exists(const struct StrMap *map, const char *key);
 
-size_t sm_put(StrMap *map, const char *key, const char *value);
+size_t sm_put(struct StrMap *map, const char *key, const char *value);
 
-size_t sm_get_count(const StrMap *map);
+size_t sm_get_count(const struct StrMap *map);
 
-int sm_enum(const StrMap *map, sm_enum_func enum_func, const void *obj);
+int sm_enum(const struct StrMap *map, sm_enum_func enum_func, const void *obj);
 
-static Pair * get_pair(Bucket *bucket, const char *key);
+static struct Pair * get_pair(struct Bucket *bucket, const char *key);
 
 static unsigned long map_hash(const char *str);
 
-StrMap *map_create(unsigned int capacity);
+struct StrMap *map_create(unsigned int capacity);
 
-void map_destroy(StrMap *p_map);
+void map_destroy(struct StrMap *p_map);
 
 #define MAX_MEM_ADDRESS_DIGITS 20
 
-size_t map_put(StrMap *p_map, const char *p_key, void *p_value);
+size_t map_put(struct StrMap *p_map, const char *p_key, void *p_value);
 
-void *map_get(StrMap *p_map, const char *p_key);
+void *map_get(struct StrMap *p_map, const char *p_key);
 
 void *map_get_or_make(
     struct StrMap *p_map,
     char *k_key,
     void *(*new_func)(),
-    size_t len=0,
-    void *(*init_func)(void *)=0,
-    unsigned int *obj_no=0
+    size_t len,
+    void *(*init_func)(void *),
+    unsigned int *obj_no
 );
 
 
@@ -1674,7 +1668,7 @@ struct t_summary {
 struct t_portfolio {
     unsigned int no;
 
-    StrMap *by_currency;
+    struct StrMap *by_currency;
 };
 
 // Point to a list of asset holdings based on account.
@@ -1700,7 +1694,7 @@ struct t_state {
     // Next 32 bytes = encryption priv key.
     uint8_t *p_master_seed;
 
-    StrMap *accounts;
+    struct StrMap *accounts;
 
     unsigned int active_offers;
     struct t_offer offers[OFFERS_CAPACITY];
@@ -1708,7 +1702,7 @@ struct t_state {
     unsigned int active_matches;
 
     // Doubly linked list of t_match.
-    StrMap *matches;
+    struct StrMap *matches;
 
     //map<char *, struct t_pending_matches> pending_matches;
 };
@@ -1771,29 +1765,29 @@ struct t_json_tokens
 
 unsigned char *get_json_key_name(struct t_linked_info* linked_list);
 
-void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info* linked_list);
+void json_save_key_pair(struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info* linked_list);
 
 struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list, struct t_json_tokens *p_json_tokens);
 
-unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info *linked_list);
+unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info *linked_list);
 
 struct t_json_tokens *new_json_tokens();
 
-StrMap* json_decode(const char* json_str, size_t json_str_len);
+struct StrMap* json_decode(const char* json_str, size_t json_str_len);
 
-char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit=0, bool do_throw=false);
+char *get_json_str(struct StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw);
 
-struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw=false);
+struct t_number *get_json_no(struct StrMap* p_json_map, const char *key, bool do_throw);
 
-char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_pattern=0, size_t str_len_limit=0, bool str_is_hex=0, bool return_bytes=0, bool do_throw=true);
+char *jstr_schema(struct StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw);
 
 struct t_number *jno_schema(
-	StrMap* p_json_map, const char *key,
-	char *p_cstr_exact_list_filter=0,
-	struct t_number gte_filter=N("0"),
-	struct t_number lte_filter=N("0"),
-	unsigned int op=LOGIC_AND,
-	bool do_throw=true
+	struct StrMap* p_json_map, const char *key,
+	char *p_cstr_exact_list_filter,
+	struct t_number gte_filter,
+	struct t_number lte_filter, //Ns("0")
+	unsigned int op, //LOGIC_AND
+	bool do_throw
 );
 
 /* macros */
@@ -1828,8 +1822,6 @@ struct t_number *jno_schema(
     for (i = 0; i < 8; i++) sha256_state[i] = sha256_state[i] + S[i];
 
 int sha256(unsigned char out[32], const unsigned char* in, size_t len);
-
-#include <random>
 
 signed int rand_chr();
 
@@ -4078,7 +4070,7 @@ bool set_json_offsets(char **json_str, size_t *size);
 
 uint8_t *sign_json_payload(char *json_str, size_t size, uint8_t *priv_key);
 
-bool valid_json_sig(char *json_str, size_t size, StrMap* p_json);
+bool valid_json_sig(char *json_str, size_t size, struct StrMap* p_json);
 
 int calc_challenge_hash(uint8_t *nonce_buf, uint8_t *pub_key_buf, uint8_t *challenge_hash);
 
@@ -4088,15 +4080,15 @@ uint8_t *pem_pub_to_mr_signer(uint8_t *pub_pem_buf, size_t pub_pem_len, uint8_t 
 
 #endif
 
-bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf=0, size_t pub_pem_len=0);
+bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf, size_t pub_pem_len);
     
 char *api_message(
     const char *call,
     char *params_buf, size_t params_len,
     uint8_t *secp256k1_priv_b32, 
-    unsigned int demo=0,
-    uint8_t *target_info_buf=0, size_t target_info_size=0,
-    const char *reply_mode="long_poll");
+    unsigned int demo,
+    uint8_t *target_info_buf, size_t target_info_size,
+    const char *reply_mode); // long_poll
     
 
 /*
@@ -4255,7 +4247,6 @@ int main(int argc, const char * argv[])
 #define WBY_H_
 
 #include <stdarg.h>
-#include <cstdarg>
 
 #ifdef __cplusplus
 extern "C" {
@@ -4428,7 +4419,8 @@ void wby_init(struct wby_server*, const struct wby_config*,
     Output:
     -   needed memory for the server to run
 */
-int wby_start(struct wby_server*, void *memory);
+int
+wby_start(struct wby_server *server, struct server_state *state, void *memory);
 /*  this function starts running the server in the specificed memory space. Size
  *  must be at least big enough as determined in the wby_server_init().
     Input:
@@ -4542,7 +4534,7 @@ void wby_config(const char *address, unsigned int port, struct server_state* sta
 
 char *get_post_buf(struct wby_con *connection, struct wby_server *svr);
 
-StrMap *post_json_eq_to_json(char *post_content);
+struct StrMap *post_json_eq_to_json(char *post_content);
 
 unsigned int serve_static_file(const char *www_root_path, struct wby_con *connection);
 
@@ -4636,7 +4628,7 @@ typedef struct http_internal_t
     } http_internal_t;
 
 int http_get_response(http_t* request);
-char *url_get_contents(const char *url, double timeout=4.0);
+char *url_get_contents(const char *url, double timeout); // 4.0
 
 
 #endif
@@ -5052,7 +5044,7 @@ void next(void)
 	g.lookahead = lex();
 }
 
-int accept(int t)
+int accepti(int t)
 {
 	if (g.lookahead == t) {
 		next();
@@ -5093,36 +5085,36 @@ Renode *parseatom(void)
 		next();
 		return atom;
 	}
-	if (accept('.'))
+	if (accepti('.'))
 		return newnode(P_ANY);
-	if (accept('(')) {
+	if (accepti('(')) {
 		atom = newnode(P_PAR);
 		if (g.nsub == MAXSUB)
 			die("too many captures");
 		atom->n = g.nsub++;
 		atom->x = parsealt();
 		g.sub[atom->n] = atom;
-		if (!accept(')'))
+		if (!accepti(')'))
 			die("unmatched '('");
 		return atom;
 	}
-	if (accept(L_NC)) {
+	if (accepti(L_NC)) {
 		atom = parsealt();
-		if (!accept(')'))
+		if (!accepti(')'))
 			die("unmatched '('");
 		return atom;
 	}
-	if (accept(L_PLA)) {
+	if (accepti(L_PLA)) {
 		atom = newnode(P_PLA);
 		atom->x = parsealt();
-		if (!accept(')'))
+		if (!accepti(')'))
 			die("unmatched '('");
 		return atom;
 	}
-	if (accept(L_NLA)) {
+	if (accepti(L_NLA)) {
 		atom = newnode(P_NLA);
 		atom->x = parsealt();
-		if (!accept(')'))
+		if (!accepti(')'))
 			die("unmatched '('");
 		return atom;
 	}
@@ -5134,10 +5126,10 @@ Renode *parserep(void)
 {
 	Renode *atom;
 
-	if (accept('^')) return newnode(P_BOL);
-	if (accept('$')) return newnode(P_EOL);
-	if (accept(L_WORD)) return newnode(P_WORD);
-	if (accept(L_NWORD)) return newnode(P_NWORD);
+	if (accepti('^')) return newnode(P_BOL);
+	if (accepti('$')) return newnode(P_EOL);
+	if (accepti(L_WORD)) return newnode(P_WORD);
+	if (accepti(L_NWORD)) return newnode(P_NWORD);
 
 	atom = parseatom();
 	if (g.lookahead == L_COUNT) {
@@ -5145,11 +5137,11 @@ Renode *parserep(void)
 		next();
 		if (max < min)
 			die("invalid quantifier");
-		return newrep(atom, accept('?'), min, max);
+		return newrep(atom, accepti('?'), min, max);
 	}
-	if (accept('*')) return newrep(atom, accept('?'), 0, REPINF);
-	if (accept('+')) return newrep(atom, accept('?'), 1, REPINF);
-	if (accept('?')) return newrep(atom, accept('?'), 0, 1);
+	if (accepti('*')) return newrep(atom, accepti('?'), 0, REPINF);
+	if (accepti('+')) return newrep(atom, accepti('?'), 1, REPINF);
+	if (accepti('?')) return newrep(atom, accepti('?'), 0, 1);
 	return atom;
 }
 
@@ -5176,7 +5168,7 @@ Renode *parsealt(void)
 {
 	Renode *alt, *x;
 	alt = parsecat();
-	while (accept('|')) {
+	while (accepti('|')) {
 		x = alt;
 		alt = newnode(P_ALT);
 		alt->x = x;
@@ -6479,9 +6471,9 @@ void assert_uint128_t(uint128_t left, uint128_t right)
 	if (left != right)
 	{
 		printf("Assert failed [left, right]: \r\n");
-		print_uint128_t(left);
+		print_uint128_t(left, 0);
 		printf("\r\n");
-		print_uint128_t(right);
+		print_uint128_t(right, 0);
 		assert(0);
 	}
 }
@@ -6494,7 +6486,7 @@ unsigned char * Z(unsigned char *c_str, size_t from_size_of)
     return c_str;
 }
 
-void PN(t_number no)
+void PN(struct t_number no)
 {
     print_uint128_t(no.value, no.precision);
     printf("\r\n");
@@ -6879,8 +6871,8 @@ void remove_value_from_linked_list(
         struct t_linked_info *list, void *value
         )
 {
-        t_linked_item *p_list_item = list->p_list_start;
-        t_linked_item *p_next = NULL;
+        struct t_linked_item *p_list_item = list->p_list_start;
+        struct t_linked_item *p_next = NULL;
         while(p_list_item != NULL)
         {
                 p_next = (struct t_linked_item *) p_list_item->p_next;
@@ -6946,8 +6938,8 @@ void remove_values_from_linked_list(
     struct t_linked_info *needle_list
 )
 {
-    t_linked_item *needle_item = needle_list->p_list_start;
-    t_linked_item *p_next = NULL;
+    struct t_linked_item *needle_item = needle_list->p_list_start;
+    struct t_linked_item *p_next = NULL;
     while(needle_item != NULL)
     {
         p_next = (struct t_linked_item *) needle_item->p_next;
@@ -7236,7 +7228,7 @@ bool safe_logic(unsigned int op, struct t_number left, struct t_number right, ui
     exit(1);
 }
 
-uint128_t Min(uint128_t left, uint128_t right)
+uint128_t min_u(uint128_t left, uint128_t right)
 {
     if(left <= right)
     {
@@ -7246,7 +7238,7 @@ uint128_t Min(uint128_t left, uint128_t right)
     return right;
 }
 
-uint128_t Max(uint128_t left, uint128_t right)
+uint128_t max_u(uint128_t left, uint128_t right)
 {
     if(left >= right)
     {
@@ -7256,9 +7248,9 @@ uint128_t Max(uint128_t left, uint128_t right)
     return right;
 }
 
-struct t_number Min(struct t_number left, struct t_number right)
+struct t_number min_t(struct t_number left, struct t_number right)
 {
-    if(safe_logic(LESS_EQUALS, left, right))
+    if(safe_logic(LESS_EQUALS, left, right, 0))
     {
         return left;
     }
@@ -7266,9 +7258,9 @@ struct t_number Min(struct t_number left, struct t_number right)
     return right;
 }
 
-struct t_number Max(struct t_number left, struct t_number right)
+struct t_number max_t(struct t_number left, struct t_number right)
 {
-    if(safe_logic(GREATER_EQUALS, left, right))
+    if(safe_logic(GREATER_EQUALS, left, right, 0))
     {
         return left;
     }
@@ -7276,10 +7268,10 @@ struct t_number Max(struct t_number left, struct t_number right)
     return right;
 }
 
-t_number N(uint128_t value, uint128_t precision)
+struct t_number Nu(uint128_t value, uint128_t precision)
 {
     // Pack results into t_number.
-    t_number result = { value, 0 };
+    struct t_number result = { value, 0 };
     if(precision != 1000)
     {
         result = safe_dec(result, precision);
@@ -7321,8 +7313,8 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Line up decimal points.
     if(left.precision != right.precision)
     {
-        left = safe_dec(left, Max(left.precision, right.precision));
-        right = safe_dec(right, Max(left.precision, right.precision));
+        left = safe_dec(left, max_u(left.precision, right.precision));
+        right = safe_dec(right, max_u(left.precision, right.precision));
     }
 
     // Check for overflow before adding them.
@@ -7335,7 +7327,7 @@ struct t_number safe_add(struct t_number left, struct t_number right)
     // Compute result.
     struct t_number result = {
         left.value + right.value,
-        Max(left.precision, right.precision)
+        max_u(left.precision, right.precision)
     };
 
     return result;
@@ -7346,8 +7338,8 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Line up decimal points.
     if(left.precision != right.precision)
     {
-        left = safe_dec(left, Max(left.precision, right.precision));
-        right = safe_dec(right, Max(left.precision, right.precision));
+        left = safe_dec(left, max_u(left.precision, right.precision));
+        right = safe_dec(right, max_u(left.precision, right.precision));
     }
 
     // Check for overflow before adding them.
@@ -7367,7 +7359,7 @@ struct t_number safe_sub(struct t_number left, struct t_number right)
     // Return result.
     struct t_number no = {
         result,
-        Max(left.precision, right.precision)
+        max_u(left.precision, right.precision)
     };
 
     return no;
@@ -7486,10 +7478,10 @@ struct t_number safe_div(struct t_number left, struct t_number right)
 
     // Check for division overflow errors.
     struct t_number derive_left = safe_add(
-            safe_mul(N(whole_part, 0), N(right.value, 0)),
-            N(left.value % right.value, 0)
+            safe_mul(Nu(whole_part, 0), Nu(right.value, 0)),
+            Nu(left.value % right.value, 0)
     );
-    if(!safe_logic(BOTH_EQUALS, N(left.value, 0), derive_left, 0))
+    if(!safe_logic(BOTH_EQUALS, Nu(left.value, 0), derive_left, 0))
     {
         printf("Division overflow error.\r\n");
         exit(1);
@@ -7606,7 +7598,7 @@ struct t_number no_by_index(struct t_number no, uint128_t offset, uint128_t limi
     return answer;
 }
 
-struct t_number round(struct t_number no, uint128_t precision)
+struct t_number safe_round(struct t_number no, uint128_t precision)
 {
     struct t_number result;
     uint128_t digits = count_digits(no.value);
@@ -7624,7 +7616,7 @@ struct t_number round(struct t_number no, uint128_t precision)
 
     // Get trailing digit and mid value.
     uint128_t whole_len = (digits - no.precision);
-    struct t_number surplus = no_by_index(no, whole_len + (precision));
+    struct t_number surplus = no_by_index(no, whole_len + (precision), 0);
     if(!surplus.value)
     {
         return no;
@@ -7685,7 +7677,7 @@ struct t_number safe_math(
     }
 
     // Calculate result.
-    t_number result = (*math_op) (left, right);
+    struct t_number result = (*math_op) (left, right);
 
     // Truncate or pad result as needed to required precision.
     result = safe_dec(result, precision);
@@ -7695,7 +7687,7 @@ struct t_number safe_math(
 
 uint128_t uint128_get_whole(struct t_number no)
 {
-    t_number temp = safe_dec(no, 0);
+    struct t_number temp = safe_dec(no, 0);
 
     uint128_t result = temp.value;
 
@@ -7706,15 +7698,16 @@ uint128_t uint128_get_dec(struct t_number no)
 {
     // Pad whole portion.
     uint128_t whole_unpadded = uint128_get_whole(no);
-    t_number whole_padded = safe_dec(
-        N(whole_unpadded, 0), no.precision
+    struct t_number whole_padded = safe_dec(
+        Nu(whole_unpadded, 0), no.precision
     );
 
     // Calculate decimal result.
-    t_number temp = safe_math(
+    struct t_number temp = safe_math(
         &safe_sub,
         no,
-        whole_padded
+        whole_padded,
+        0
     );
 
     uint128_t result = temp.value;
@@ -7746,14 +7739,10 @@ struct t_number safe_mod(struct t_number left, struct t_number right, uint128_t 
     return result;
 }
 
-t_number N(const char *s, uint128_t precision)
+struct t_number Ns(const char *s, uint128_t precision)
 {
     // Someone forgot to use quotes.
     assert(s != 0);
-
-
-
-
 
     uint128_t value = 0;
     uint128_t s_precision = 0;
@@ -7827,7 +7816,7 @@ t_number N(const char *s, uint128_t precision)
 
 
     // Pack results into t_number.
-    t_number result = { value, existing_prec };
+    struct t_number result = { value, existing_prec };
 
     // Ensure input is stored (and / or truncated) to this len.
     if(precision)
@@ -7854,19 +7843,19 @@ struct StrMap *sm_new(unsigned int capacity)
 {
     struct StrMap *map;
 
-    map = (struct StrMap *) malloc(sizeof(StrMap));
+    map = (struct StrMap *) malloc(sizeof(struct StrMap));
     if (map == NULL) {
         return NULL;
     }
     map->count = capacity;
-    map->buckets = (struct Bucket *) malloc(map->count * sizeof(Bucket));
+    map->buckets = (struct Bucket *) malloc(map->count * sizeof(struct Bucket));
     if (map->buckets == NULL) {
         printf("CANT ALLOCATE BUCKETS \r\n");
         free(map);
         assert(0);
         return NULL;
     }
-    memset(map->buckets, 0, map->count * sizeof(Bucket));
+    memset(map->buckets, 0, map->count * sizeof(struct Bucket));
     return map;
 }
 
@@ -7884,11 +7873,11 @@ void sm_iter(const char *key, const char *value, const void *obj)
     }
 }
 
-void sm_delete(StrMap *map)
+void sm_delete(struct StrMap *map)
 {
     unsigned int i, j, n, m;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return;
@@ -7914,11 +7903,11 @@ void sm_delete(StrMap *map)
     free(map);
 }
 
-size_t sm_get(const StrMap *map, const char *key, char *out_buf, size_t n_out_buf)
+size_t sm_get(const struct StrMap *map, const char *key, char *out_buf, size_t n_out_buf)
 {
     unsigned int index;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         #if defined(JSON_DEBUG)
@@ -7973,11 +7962,11 @@ size_t sm_get(const StrMap *map, const char *key, char *out_buf, size_t n_out_bu
     return 1;
 }
 
-int sm_exists(const StrMap *map, const char *key)
+int sm_exists(const struct StrMap *map, const char *key)
 {
     unsigned int index;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -7994,11 +7983,11 @@ int sm_exists(const StrMap *map, const char *key)
     return 1;
 }
 
-size_t sm_put(StrMap *map, const char *key, const char *value)
+size_t sm_put(struct StrMap *map, const char *key, const char *value)
 {
     size_t key_len, value_len, index;
-    Bucket *bucket;
-    Pair *tmp_pairs, *pair;
+    struct Bucket *bucket;
+    struct Pair *tmp_pairs, *pair;
     char *tmp_value;
     char *new_key, *new_value;
 
@@ -8087,7 +8076,7 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
         /* The bucket is empty, lazily allocate space for a single
          * key-value pair.
          */
-        bucket->pairs = (struct Pair *) malloc(sizeof(Pair));
+        bucket->pairs = (struct Pair *) malloc(sizeof(struct Pair));
         if (bucket->pairs == NULL) {
             free(new_key);
             free(new_value);
@@ -8105,7 +8094,7 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
         /* The bucket wasn't empty but no pair existed that matches the provided
          * key, so create a new key-value pair.
          */
-        tmp_pairs = (struct Pair *) realloc(bucket->pairs, (bucket->count + 1) * sizeof(Pair));
+        tmp_pairs = (struct Pair *) realloc(bucket->pairs, (bucket->count + 1) * sizeof(struct Pair));
         if (tmp_pairs == NULL) {
             free(new_key);
             free(new_value);
@@ -8152,12 +8141,12 @@ size_t sm_put(StrMap *map, const char *key, const char *value)
     return 1;
 }
 
-size_t sm_get_count(const StrMap *map)
+size_t sm_get_count(const struct StrMap *map)
 {
     size_t i, j, n, m;
     size_t count;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -8181,11 +8170,11 @@ size_t sm_get_count(const StrMap *map)
     return count;
 }
 
-int sm_enum(const StrMap *map, sm_enum_func enum_func, const void *obj)
+int sm_enum(const struct StrMap *map, sm_enum_func enum_func, const void *obj)
 {
     unsigned int i, j, n, m;
-    Bucket *bucket;
-    Pair *pair;
+    struct Bucket *bucket;
+    struct Pair *pair;
 
     if (map == NULL) {
         return 0;
@@ -8215,10 +8204,10 @@ int sm_enum(const StrMap *map, sm_enum_func enum_func, const void *obj)
  * Returns a pair from the bucket that matches the provided key,
  * or null if no such pair exist.
  */
-static Pair * get_pair(Bucket *bucket, const char *key)
+static struct Pair * get_pair(struct Bucket *bucket, const char *key)
 {
     unsigned int i, n;
-    Pair *pair;
+    struct Pair *pair;
 
     n = bucket->count;
     if (n == 0) {
@@ -8260,17 +8249,17 @@ static unsigned long map_hash(const char *str)
     return hash;
 }
 
-StrMap *map_create(unsigned int capacity)
+struct StrMap *map_create(unsigned int capacity)
 {
     return sm_new(capacity);
 }
 
-void map_destroy(StrMap *p_map)
+void map_destroy(struct StrMap *p_map)
 {
     sm_delete(p_map);
 }
 
-size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
+size_t map_put(struct StrMap *p_map, const char *p_key, void *p_value)
 {
     uint64_t value_address_no = (uint64_t) p_value;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
@@ -8280,7 +8269,7 @@ size_t map_put(StrMap *p_map, const char *p_key, void *p_value)
     return sm_put(p_map, p_key, (const char *) value_address_str);
 }
 
-void *map_get(StrMap *p_map, const char *p_key)
+void *map_get(struct StrMap *p_map, const char *p_key)
 {
     size_t result = 0;
     char value_address_str[MAX_MEM_ADDRESS_DIGITS + 1] = {};
@@ -8293,7 +8282,7 @@ void *map_get(StrMap *p_map, const char *p_key)
     }
     else
     {
-        uint64_t value_address_no = (uint64_t) N(value_address_str, 0).value;
+        uint64_t value_address_no = (uint64_t) Ns(value_address_str, 0).value;
         void *p_value = 0;
 
         #if defined(__i386__) || defined(EMSCRIPTEN) || (!defined(_WIN64) && defined(_WIN32))
@@ -8491,7 +8480,7 @@ unsigned char *get_json_key_name(struct t_linked_info* linked_list)
 }
 
 // Put a value pulled from JSON in the hash map for the right key.
-void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info* linked_list)
+void json_save_key_pair(struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info* linked_list)
 {
 	// What is the tree type?
 	#ifdef JSON_DEBUG
@@ -8531,7 +8520,7 @@ void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, str
 
 		p_json_expr->p_no = (struct t_number *) calloc(1, sizeof(struct t_number));
 		//assert(p_json_tokens->expr.p_no_str);
-		*(p_json_expr->p_no) = N((char*) p_json_tokens->expr.p_no_str);
+		*(p_json_expr->p_no) = Ns((char*) p_json_tokens->expr.p_no_str, 0);
 
     }
     else // String literals.
@@ -8631,7 +8620,7 @@ struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list,
 }
 
 // Process stream of JSON characters in order.
-unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info *linked_list)
+unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info *linked_list)
 {
 	#ifdef JSON_DEBUG
 		printf("%c=%d\r\n", *p_ch, p_json_tokens->expect);
@@ -8929,7 +8918,7 @@ struct t_json_tokens *new_json_tokens()
 }
 
 // Main function for decoding JSON.
-StrMap* json_decode(const char* json_str, size_t json_str_len)
+struct StrMap* json_decode(const char* json_str, size_t json_str_len)
 {
 	// Declare variables.
 	unsigned int json_error = 0;
@@ -8939,7 +8928,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 	struct t_json_tokens* p_json_tokens = 0;
 	struct t_json_tokens* p_json_tokens_sub_tree = 0;
 	struct t_linked_info* linked_list = 0;
-	StrMap* p_json = 0;
+	struct StrMap* p_json = 0;
 
 	// Function should be easy to use and accept
 	// any memory region that might quickly go out of scope
@@ -9059,7 +9048,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
 		// Delete remaining sub trees.
 		if (linked_list)
 		{
-			delete_linked_list(linked_list);
+			delete_linked_list(linked_list, 0);
 		}
 
 		// Deallocate heap memory.
@@ -9101,7 +9090,7 @@ StrMap* json_decode(const char* json_str, size_t json_str_len)
     }
 */
 
-char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
+char *get_json_str(struct StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw)
 {
 	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
@@ -9146,7 +9135,7 @@ char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit, bo
 	}
 }
 
-struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
+struct t_number *get_json_no(struct StrMap* p_json_map, const char *key, bool do_throw)
 {
 	void *json_result = map_get(p_json_map, key);
 	if(!json_result)
@@ -9177,7 +9166,7 @@ struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw)
 	}
 }
 
-char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw)
+char *jstr_schema(struct StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw)
 {
 	char *p_cstr_buf = get_json_str(p_json_map, key, str_len_limit, do_throw);
 	if(!p_cstr_buf) return 0;
@@ -9248,7 +9237,7 @@ char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_patter
 }
 
 struct t_number *jno_schema(
-	StrMap* p_json_map, const char *key,
+	struct StrMap* p_json_map, const char *key,
 	char *p_cstr_exact_list_filter,
 	struct t_number gte_filter,
 	struct t_number lte_filter,
@@ -9283,7 +9272,7 @@ struct t_number *jno_schema(
 				}
 
 				// Validate current number against this.
-				if(safe_logic(BOTH_EQUALS, N(p_cstr_exact_filter), *p_no))
+				if(safe_logic(BOTH_EQUALS, Ns(p_cstr_exact_filter, 0), *p_no, 0))
 				{
 					match_found = true;
 					break;
@@ -9308,13 +9297,13 @@ struct t_number *jno_schema(
 	}
 
 	// Process range filters.
-	if(safe_logic(NOT_EQUALS, gte_filter, N("0")) && safe_logic(NOT_EQUALS, lte_filter, N("0")))
+	if(safe_logic(NOT_EQUALS, gte_filter, Ns("0", 0), 0) && safe_logic(NOT_EQUALS, lte_filter, Ns("0", 0), 0))
 	{
 		// Do AND compare.
 		if(op == LOGIC_AND)
 		{
-			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no) &&
-				 safe_logic(LESS_EQUALS, lte_filter, *p_no)) )
+			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no, 0) &&
+				 safe_logic(LESS_EQUALS, lte_filter, *p_no, 0)) )
 			{
 				if(do_throw)
 				{
@@ -9329,8 +9318,8 @@ struct t_number *jno_schema(
 		// Do OR compare.
 		if(op == LOGIC_OR)
 		{
-			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no) ||
-				 safe_logic(LESS_EQUALS, lte_filter, *p_no)) )
+			if(!(safe_logic(GREATER_EQUALS, gte_filter, *p_no, 0) ||
+				 safe_logic(LESS_EQUALS, lte_filter, *p_no, 0)) )
 			{
 				if(do_throw)
 				{
@@ -13749,7 +13738,7 @@ uint8_t *sign_json_payload(char *json_str, size_t size, uint8_t *priv_key)
     return sig_hex;
 }
 
-bool valid_json_sig(char *json_str, size_t size, StrMap* p_json)
+bool valid_json_sig(char *json_str, size_t size, struct StrMap* p_json)
 {
     // Get sig offsets.
     size_t sig_len = 0;
@@ -13979,7 +13968,7 @@ bool verify_api_message(char *msg_buf, size_t msg_len, uint8_t* pub_pem_buf, siz
     bool msg_is_valid = false;
     bool valid_user_pub_sig = false;
     char *json_str = 0;
-    StrMap *p_json_map = 0;
+    struct StrMap *p_json_map = 0;
     uint8_t *p_report = 0;
     char *nonce_hex = 0;
     char *pub_key_hex = 0;
@@ -14460,7 +14449,6 @@ char *api_message(
 }
 
 #include <stdarg.h>
-#include <cstdarg>
 
 typedef int wby__check_ptr_size[(sizeof(void*) == sizeof(WBY_UINT_PTR)) ? 1 : -1];
 #define WBY_LEN(a) (sizeof(a)/sizeof((a)[0]))
@@ -14490,7 +14478,6 @@ WBY_API void
 wby_dbg(wby_log_f log, const char *fmt, ...)
 {
 	#include <stdarg.h>
-	#include <cstdarg>
 
     char buffer[1024];
     va_list args;
@@ -16199,7 +16186,7 @@ char *get_post_buf(struct wby_con *connection, struct wby_server *svr)
 	return NULL;
 }
 
-StrMap *post_json_eq_to_json(char *post_content)
+struct StrMap *post_json_eq_to_json(char *post_content)
 {
 	char *json_str = strstr((char* const) post_content, "json=");
 	if (json_str)

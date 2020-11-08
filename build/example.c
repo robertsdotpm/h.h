@@ -2,9 +2,6 @@
 #include "../h.h"
 // Copy https://raw.githubusercontent.com/robertsdotpm/h.h/master/h.h and include it
 
-    
-
-
 /*
 #include "sections/header/includes.h"
 #include "sections/code/includes.cpp"
@@ -42,12 +39,6 @@
 
 #include "sections/header/hashmap.h"
 #include "sections/code/hashmap.cpp"
-
-
-
-#include "sections/header/types.h"
-#include "sections/code/types.cpp"
-
 
 
 #include "sections/header/json.h"
@@ -107,7 +98,7 @@ int dispatch(struct wby_con *connection, void *userdata, void *server)
         if(!post_content) return 0;
 
         // POST a field called json with the content as valid json.
-        StrMap *p_json = post_json_eq_to_json(post_content);
+        struct StrMap *p_json = post_json_eq_to_json(post_content);
         if(!p_json) return 0;
 
         // Then you write your code to manipulate it here...
@@ -120,19 +111,19 @@ int dispatch(struct wby_con *connection, void *userdata, void *server)
         return 0;
     }
 
-    /*
-    If you want to support API requests you could check for /api/
-    in the URL and run your code there otherwise call server_static_file.
-    E.g.
-    if (strncmp_s("/api", 4, connection->request.uri, url_len, 4) != 0)
-    {
-        ... serve static file
-    }
-    else
-    {
-        ... handle api calls
-    }
-    */
+    
+    //If you want to support API requests you could check for /api/
+    //in the URL and run your code there otherwise call server_static_file.
+    //E.g.
+    //if (strncmp_s("/api", 4, connection->request.uri, url_len, 4) != 0)
+    //{
+    //    ... serve static file
+    //}
+    //else
+    //{
+    //    ... handle api calls
+    //}
+    
     
 }
 
@@ -159,33 +150,36 @@ int main(int argc, char **argv)
 
     
         // BigNum ---------------------------------------------
-        struct t_number a = N("10.1337");
-        struct t_number b = N("342243.34134134234");
+        struct t_number a = Ns("10.1337", 0);
+        struct t_number b = Ns("342243.34134134234", 0);
         struct t_number result = safe_math(&safe_mul, a, b, 4); // Precision = 4.
         PN(result);
 
         // Throws an error if precision overflows.
-        PN( safe_math(&safe_add, a, b) );
+        PN( safe_math(&safe_add, a, b, 0) );
 
         // Divide and use highest precision possible.
-        struct t_number x = safe_math(&safe_div, N(2), N("0.23"));
+        struct t_number x = safe_math(&safe_div, Nu(2, 0), Ns("0.23", 0), 0);
 
         // Round down.
-        PN( round( N("10.1234"), 3 ) );
+        PN( safe_round( Ns("10.1234", 0), 3 ) );
 
         // Round up.
-        PN( round( N("10.1235"), 3 ) );
+        PN( safe_round( Ns("10.1235", 0), 3 ) );
 
         // Subtract -- mixed precision -- and padded right.
-        struct t_number c = N("12.3", 3);
-        struct t_number d = N("5.02", 5);
+        struct t_number c = Ns("12.3", 3);
+        struct t_number d = Ns("5.02", 5);
         PN( safe_math(&safe_sub, c, d, 6) );
 
         // Logic expressions
-        if( safe_logic(GREATER_THAN, c, d) )
+        if( safe_logic(GREATER_THAN, c, d, 6) )
         {
             printf("c is > d\r\n");
         }
+
+
+        
 
         // All the logic ops:
         // GREATER_THAN
@@ -201,10 +195,10 @@ int main(int argc, char **argv)
 
         // Create hashmap.
         unsigned int assoc_size = 1024 * 64;
-        StrMap *p_map = map_create(assoc_size);
+        struct StrMap *p_map = map_create(assoc_size);
 
         // Put arbitrary objects in hashmap.
-        struct t_number some_obj = N(10);
+        struct t_number some_obj = Nu(10, 0);
         unsigned char typical_c_str[] = "test";
         map_put(p_map, "obj1", &some_obj);
         map_put(p_map, "obj2", &typical_c_str);
@@ -224,10 +218,12 @@ int main(int argc, char **argv)
         struct t_linked_info *p_list = create_linked_list_info();
 
         // Add items to linked list.
-        struct t_number a_no = N("2");
-        struct t_number b_no = N("0");
+        struct t_number a_no = Ns("2", 0);
+        struct t_number b_no = Ns("0", 0);
         add_value_to_linked_list(p_list, &a_no);
         add_value_to_linked_list(p_list, &b_no);
+
+        
 
         // Loop over list and display items.
         struct t_linked_item *p_item = NULL; 
@@ -246,18 +242,18 @@ int main(int argc, char **argv)
         printf("List len: %d\r\n", p_list->no); // 0.
 
         // Destroy list.
-        delete_linked_list(p_list);
+        delete_linked_list(p_list, 0);
 
-        /* 
-        Join two lists: 
-
-            void join_linked_lists(
-                struct t_linked_info *list_a,
-                struct t_linked_info *list_b
-            )
-
-        This will add list_b to list_a in place.
-        */
+        
+        //Join two lists: 
+        //
+        //    void join_linked_lists(
+        //        struct t_linked_info *list_a,
+        //        struct t_linked_info *list_b
+        //    )
+        //
+        //This will add list_b to list_a in place.
+        
 
         // JSON ------------------------------------------------------------
 
@@ -271,11 +267,11 @@ int main(int argc, char **argv)
         "        \"admin\": 4"
         "    }"
         "}";
-        StrMap* p_json = json_decode(json_str, strlen(json_str));
+        struct StrMap* p_json = json_decode(json_str, strlen(json_str));
 
         // Get an item from JSON by key.
-        char *pub = get_json_str(p_json, "[auth][pub]");
-        struct t_number *is_admin = get_json_no(p_json, "[auth][admin]");
+        char *pub = get_json_str(p_json, "[auth][pub]", 0, 0);
+        struct t_number *is_admin = get_json_no(p_json, "[auth][admin]", 0);
         printf("%s\r\n", pub);
         PN(*is_admin);
         
@@ -288,18 +284,20 @@ int main(int argc, char **argv)
         is_admin = get_json_no(p_json, "[auth][admin]", do_throw);
         char *hex_pub = jstr_schema(p_json, "[auth][pub]", "^[a-fA-F0-9]+$", 64, str_is_hex, return_bytes, do_throw);
         char exact_no_list[] = "1,2,";
-        struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0]);
+        struct t_number *exact_no = jno_schema(p_json, "[auth][admin]", &exact_no_list[0], Ns("0", 0), Ns("0", 0), LOGIC_AND, 0 );
 
-        /*
-        struct t_number *jno_schema(
-        	StrMap* p_json_map, const char *key,
-        	char *p_cstr_exact_list_filter=0,
-        	struct t_number gte_filter=N(0),
-        	struct t_number lte_filter=N(0),
-        	unsigned int op=LOGIC_AND,
-        	bool do_throw=true
-        );
-        */
+        
+
+        
+        //struct t_number *jno_schema(
+        //	struct StrMap* p_json_map, const char *key,
+        //	char *p_cstr_exact_list_filter=0,
+        //	struct t_number gte_filter=N(0),
+        //	struct t_number lte_filter=N(0),
+        //	unsigned int op=LOGIC_AND,
+        //	bool do_throw=true
+        //);
+        
 
         printf("Json validated.\r\n");
 
@@ -335,22 +333,20 @@ int main(int argc, char **argv)
         // Might make sense to code a wrapper for this boiler plate.
 
         // Make sure to specify port or it won't work.
-        char *url_content = url_get_contents("http://www.google.com:80/index.html");
+        char *url_content = url_get_contents("http://www.google.com:80/index.html", 4);
         free(url_content);
 
         // HTTP POST
-        /*
-            http_t* http_post( char const* url, void const* data, size_t size, void* memctx )
-
-        Initiates a http POST request with the specified url. `url` is a zero terminated string containing the request location,
-        just like you would type it in a browser, for example `http://www.mattiasgustavsson.com:80/http_test.txt`. `data` is a
-        pointer to the data to be sent along as part of the request, and `size` is the number of bytes to send. `memctx` is a 
-        pointer to user defined data which will be passed through to the custom HTTP_MALLOC/HTTP_FREE calls. It can be NULL if 
-        no user defined data is needed. Returns a `http_t` instance, which needs to be passed to `http_process` to process the
-        request. When the request is finished (or have failed), the returned `http_t` instance needs to be released by calling
-        `http_release`. If the request was invalid, `http_post` returns NULL.
-        */
-
+        //
+        //    http_t* http_post( char const* url, void const* data, size_t size, void* memctx )
+        //
+        //Initiates a http POST request with the specified url. `url` is a zero terminated string containing the request location,
+        //just like you would type it in a browser, for example `http://www.mattiasgustavsson.com:80/http_test.txt`. `data` is a
+        //pointer to the data to be sent along as part of the request, and `size` is the number of bytes to send. `memctx` is a 
+        //pointer to user defined data which will be passed through to the custom HTTP_MALLOC/HTTP_FREE calls. It can be NULL if 
+        //no user defined data is needed. Returns a `http_t` instance, which needs to be passed to `http_process` to process the
+        //request. When the request is finished (or have failed), the returned `http_t` instance needs to be released by calling
+        //`http_release`. If the request was invalid, `http_post` returns NULL.
         
 
         // Simple single-threaded, polling web server ----------------------------
@@ -358,7 +354,7 @@ int main(int argc, char **argv)
 
 
         // Useful utility functions ----------------------------------------------
-        
+
         
         
 
@@ -368,4 +364,5 @@ int main(int argc, char **argv)
     return 0;
 
 }
+
 

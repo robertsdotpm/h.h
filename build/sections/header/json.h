@@ -48,27 +48,27 @@ struct t_json_tokens
 
 unsigned char *get_json_key_name(struct t_linked_info* linked_list);
 
-void json_save_key_pair(struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info* linked_list);
+void json_save_key_pair(struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info* linked_list);
 
 struct t_json_tokens *pop_json_token_sub_tree(struct t_linked_info *linked_list, struct t_json_tokens *p_json_tokens);
 
-unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, StrMap *p_json, struct t_linked_info *linked_list);
+unsigned int json_state_machine(unsigned char* p_ch, struct t_json_tokens* p_json_tokens, struct StrMap *p_json, struct t_linked_info *linked_list);
 
 struct t_json_tokens *new_json_tokens();
 
-StrMap* json_decode(const char* json_str, size_t json_str_len);
+struct StrMap* json_decode(const char* json_str, size_t json_str_len);
 
-char *get_json_str(StrMap* p_json_map, const char *key, size_t str_len_limit=0, bool do_throw=false);
+char *get_json_str(struct StrMap* p_json_map, const char *key, size_t str_len_limit, bool do_throw);
 
-struct t_number *get_json_no(StrMap* p_json_map, const char *key, bool do_throw=false);
+struct t_number *get_json_no(struct StrMap* p_json_map, const char *key, bool do_throw);
 
-char *jstr_schema(StrMap* p_json_map, const char *key, const char *p_cstr_pattern=0, size_t str_len_limit=0, bool str_is_hex=0, bool return_bytes=0, bool do_throw=true);
+char *jstr_schema(struct StrMap* p_json_map, const char *key, const char *p_cstr_pattern, size_t str_len_limit, bool str_is_hex, bool return_bytes, bool do_throw);
 
 struct t_number *jno_schema(
-	StrMap* p_json_map, const char *key,
-	char *p_cstr_exact_list_filter=0,
-	struct t_number gte_filter=N("0"),
-	struct t_number lte_filter=N("0"),
-	unsigned int op=LOGIC_AND,
-	bool do_throw=true
+	struct StrMap* p_json_map, const char *key,
+	char *p_cstr_exact_list_filter,
+	struct t_number gte_filter,
+	struct t_number lte_filter, //Ns("0")
+	unsigned int op, //LOGIC_AND
+	bool do_throw
 );

@@ -32,6 +32,6 @@ void join_linked_lists(
 
 struct t_linked_item * linked_list_pop(struct t_linked_info *list);
 
-void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_value)(void *)=0);
+void delete_linked_list(struct t_linked_info *p_allocations, void (*delete_list_value)(void *));
 
 struct t_linked_info *create_linked_list_info();

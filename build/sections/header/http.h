@@ -87,4 +87,4 @@ typedef struct http_internal_t
     } http_internal_t;
 
 int http_get_response(http_t* request);
-char *url_get_contents(const char *url, double timeout=4.0);
+char *url_get_contents(const char *url, double timeout); // 4.0

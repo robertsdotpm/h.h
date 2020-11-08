@@ -3,7 +3,7 @@ size_t strnlen_s(const char *s, size_t maxsize);
 #endif
 
 #ifndef _MSC_VER
-size_t strncpy_s(const char *dest, size_t dest_size, const char *src, size_t src_count);
+size_t strncpy_s(char *dest, size_t dest_size, const char *src, size_t src_count);
 #endif
 
 int strncmp_s(const char* dest, size_t dest_size, const char* src, size_t src_size, size_t count);
@@ -16,19 +16,19 @@ size_t bytes_to_hex(unsigned char* b_str, size_t b_str_len, unsigned char* out, 
 
 void hex_print(uint8_t *buf, size_t size);
 
-bool A(unsigned char *c_str, unsigned int do_throw=0);
+bool A(unsigned char *c_str, unsigned int do_throw);
 
 void reverse(char s[]);
 
 void itoa(uint128_t n, char s[]);
 
-int print_uint128_t(uint128_t u128, uint128_t precision=0);
+int print_uint128_t(uint128_t u128, uint128_t precision);
 
 void assert_uint128_t(uint128_t left, uint128_t right);
 
 unsigned char * Z(unsigned char *c_str, size_t from_size_of);
 
-void PN(t_number no);
+void PN(struct t_number no);
 
 void delete_t_number(void *p);
 
